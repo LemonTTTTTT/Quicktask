@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Safari Viewport Fix: Disables pinch zoom and user scaling -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Quick Tasks - Hospital Ward Edition</title>
   <style>
     :root {
@@ -16,7 +17,13 @@
       --primary: #1890ff;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+      touch-action: manipulation; /* Prevents double-tap and pinch zoom gestures */
+    }
     
     /* Safari Fix: Ensures click events bubble properly to document level */
     html, body { 
@@ -27,8 +34,18 @@
       height: 100vh;
       cursor: pointer; /* Critical for Safari click delegation */
       -webkit-tap-highlight-color: transparent;
+      overflow: hidden; /* Prevents page-level scrolling so fixed/sticky header stays top */
     }
     
+    /* Sticky Top Container: Keeps Header & Ward List always visible on top when typing */
+    .top-sticky-container {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--card-bg);
+      flex-shrink: 0;
+    }
+
     header { background: var(--card-bg); padding: 10px 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
     h1 { font-size: 1.1rem; font-weight: 600; }
     
@@ -53,7 +70,7 @@
     .action-link { border: none; background: none; color: var(--primary); font-size: 0.75rem; cursor: pointer; text-decoration: none; font-weight: 500; }
     .clear-btn { border: none; background: none; color: #ff4d4f; font-size: 0.75rem; cursor: pointer; font-weight: 500; }
 
-    /* Ward Navigation Bar */
+    /* Hospital Ward Navigation Bar */
     .ward-section {
       background: var(--card-bg);
       padding: 6px 12px;
@@ -93,7 +110,7 @@
       margin-left: auto;
     }
 
-    main { flex: 1; overflow-y: auto; padding: 8px; }
+    main { flex: 1; overflow-y: auto; padding: 8px; -webkit-overflow-scrolling: touch; }
     .empty-state { text-align: center; color: #8c8c8c; margin-top: 30vh; }
     .empty-icon { font-size: 1.8rem; margin-bottom: 4px; }
 
@@ -135,7 +152,6 @@
       color: #8c8c8c; 
     }
 
-    /* Safari Flex Shrink Fix (min-width: 0 allows container to shrink and force wrapping) */
     .task-left { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
     .task-details { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
     
@@ -218,7 +234,7 @@
       padding: 6px 8px;
       border: 1px solid var(--primary);
       border-radius: 4px;
-      font-size: 0.85rem;
+      font-size: 16px; /* Safari Fix: Must be 16px to prevent auto zoom */
       outline: none;
       -webkit-appearance: none;
     }
@@ -245,8 +261,26 @@
     .urgency-opt-btn.opt-mid.selected { background: var(--mid); color: white; border-color: var(--mid); }
     .urgency-opt-btn.opt-low.selected { background: var(--low); color: white; border-color: var(--low); }
 
-    footer { background: var(--card-bg); padding: 8px 12px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
-    .input-box { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; outline: none; -webkit-appearance: none; }
+    footer { 
+      background: var(--card-bg); 
+      padding: 8px 12px; 
+      border-top: 1px solid var(--border); 
+      display: flex; 
+      flex-direction: column; 
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    
+    /* Safari Fix: Font size set to 16px prevents iPhone from zooming in on input focus */
+    .input-box { 
+      width: 100%; 
+      padding: 8px 10px; 
+      border: 1px solid var(--border); 
+      border-radius: 6px; 
+      font-size: 16px; /* Critical fix for iOS Safari auto-zoom */
+      outline: none; 
+      -webkit-appearance: none; 
+    }
     .input-box:focus { border-color: var(--primary); }
     .btn-group { display: flex; gap: 6px; }
     .add-btn { flex: 1; padding: 6px; border: 1px solid var(--border); background: #fafafa; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
@@ -306,39 +340,42 @@
     .icon-btn { background: none; border: none; cursor: pointer; font-size: 0.8rem; padding: 2px 4px; border-radius: 4px; }
     .icon-btn:hover { background: #f0f0f0; }
     .modal-footer { display: flex; gap: 6px; }
-    .modal-input { flex: 1; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; -webkit-appearance: none; }
+    .modal-input { flex: 1; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 16px; -webkit-appearance: none; }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>⚡ Quick Tasks</h1>
-  </header>
+  <!-- Sticky Top Wrapper: Ensures Header, Controls, and Ward bar stay pinned at top when keyboard opens -->
+  <div class="top-sticky-container">
+    <header>
+      <h1>⚡ Quick Tasks</h1>
+    </header>
 
-  <!-- Backup Warning Banner -->
-  <div id="backup-alert" class="backup-alert" style="display: none;">
-    <span>⚠️ Backup Reminder: You haven't backed up your tasks in over 24 hours!</span>
-    <button class="action-link" onclick="exportTasks()">Backup Now</button>
-  </div>
-
-  <div class="controls">
-    <div class="toggle-group">
-      <button class="toggle-btn active" id="sort-time" onclick="setSort('time')">By time</button>
-      <button class="toggle-btn" id="sort-urgency" onclick="setSort('urgency')">By urgency</button>
+    <!-- Backup Warning Banner -->
+    <div id="backup-alert" class="backup-alert" style="display: none;">
+      <span>⚠️ Backup Reminder: You haven't backed up your tasks in over 24 hours!</span>
+      <button class="action-link" onclick="exportTasks()">Backup Now</button>
     </div>
-    <div class="backup-actions">
-      <button class="action-link" onclick="exportTasks()">📥 Backup</button>
-      <button class="action-link" onclick="document.getElementById('import-file').click()">📤 Restore</button>
-      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importTasks(event)">
-      <button class="clear-btn" onclick="clearAll()">Clear all</button>
-    </div>
-  </div>
 
-  <!-- Hospital Ward Navigation Bar -->
-  <div class="ward-section">
-    <span class="ward-label">Ward:</span>
-    <div class="ward-chips" id="ward-chips"></div>
-    <button class="settings-btn" onclick="openWardModal()">⚙️ Settings</button>
+    <div class="controls">
+      <div class="toggle-group">
+        <button class="toggle-btn active" id="sort-time" onclick="setSort('time')">By time</button>
+        <button class="toggle-btn" id="sort-urgency" onclick="setSort('urgency')">By urgency</button>
+      </div>
+      <div class="backup-actions">
+        <button class="action-link" onclick="exportTasks()">📥 Backup</button>
+        <button class="action-link" onclick="document.getElementById('import-file').click()">📤 Restore</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importTasks(event)">
+        <button class="clear-btn" onclick="clearAll()">Clear all</button>
+      </div>
+    </div>
+
+    <!-- Hospital Ward Navigation Bar -->
+    <div class="ward-section">
+      <span class="ward-label">Ward:</span>
+      <div class="ward-chips" id="ward-chips"></div>
+      <button class="settings-btn" onclick="openWardModal()">⚙️ Settings</button>
+    </div>
   </div>
 
   <main>
