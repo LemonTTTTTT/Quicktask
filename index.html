@@ -61,6 +61,9 @@
     header { background: var(--card-bg); padding: 8px 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
     h1 { font-size: 1.1rem; font-weight: 600; }
     
+    .header-actions { display: flex; gap: 8px; align-items: center; }
+    .info-btn { background: none; border: 1px solid var(--border); border-radius: 12px; padding: 2px 8px; font-size: 0.75rem; cursor: pointer; color: #555; font-weight: 500; }
+
     .backup-alert {
       background-color: #fff2f0;
       border-bottom: 1px solid #ffccc7;
@@ -340,6 +343,24 @@
     .icon-btn { background: none; border: none; cursor: pointer; font-size: 0.8rem; padding: 2px 4px; }
     .modal-footer { display: flex; gap: 6px; }
     .modal-input { flex: 1; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 16px; -webkit-appearance: none; }
+
+    /* About / Disclaimer Modal Styles */
+    .about-body {
+      font-size: 0.85rem;
+      color: #444;
+      line-height: 1.4;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 60vh;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .about-section-title {
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
   </style>
 </head>
 <body>
@@ -348,6 +369,9 @@
     <div class="top-fixed-container" id="top-fixed">
       <header>
         <h1>⚡ Quick Tasks</h1>
+        <div class="header-actions">
+          <button class="info-btn" onclick="openAboutModal()">ℹ️ Disclaimer & Info</button>
+        </div>
       </header>
 
       <div id="backup-alert" class="backup-alert" style="display: none;">
@@ -391,6 +415,26 @@
         <button class="add-btn low" onclick="addTask('low')">+ Low</button>
       </div>
     </footer>
+  </div>
+
+  <!-- Disclaimer & Acknowledgments Modal -->
+  <div id="about-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Disclaimer & Acknowledgments</h3>
+        <button class="close-modal-btn" onclick="closeAboutModal()">&times;</button>
+      </div>
+      <div class="about-body">
+        <div>
+          <div class="about-section-title">🔒 Data Privacy & Disclaimer</div>
+          <p>All data stays strictly local to your browser storage. This application functions solely as an interface for displaying and organizing your local data. Please remember to back up your tasks regularly to prevent accidental data loss, which can occur if your browser cache or site data is cleared.</p>
+        </div>
+        <div>
+          <div class="about-section-title">🙏 Acknowledgments & Inspiration</div>
+          <p>We would like to express our deepest gratitude to <strong>up.railway.app</strong> for being a tremendous source of inspiration. Special thanks as well to <strong>GitHub</strong>, and our AI collaborator <strong>Gemini</strong>, for helping make this project possible.</p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="task-ward-modal" class="modal-backdrop" style="display: none;">
@@ -478,6 +522,15 @@
         commitInlineEdit(editingTaskId);
       }
     });
+
+    function openAboutModal() {
+      if (editingTaskId !== null) commitInlineEdit(editingTaskId);
+      document.getElementById('about-modal').style.display = 'flex';
+    }
+
+    function closeAboutModal() {
+      document.getElementById('about-modal').style.display = 'none';
+    }
 
     function saveAndRender() {
       localStorage.setItem('qt_tasks', JSON.stringify(tasks));
