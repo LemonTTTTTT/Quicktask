@@ -445,9 +445,9 @@
       <div class="about-body">
 
         <div style="display: flex; flex-direction: column; gap: 8px;">
-          <button class="add-btn" style="text-align: left; padding: 10px;" onclick="alert('iOS: Tap the Share icon (square with arrow) at the bottom, then tap \'Add to Home Screen\'.
+          <button class="add-btn" style="text-align: left; padding: 10px;" onclick="openTutorial('home')">📱 How to Add to Home Screen</button>
 
-Android: Tap the 3 dots menu at the top right, then tap \'Add to Home screen\'.')">📱 How to Add to Home Screen</button>
+          <button class="add-btn" style="text-align: left; padding: 10px;" onclick="openTutorial('backup')">💾 How to Backup & Restore</button>
 
           <button class="add-btn" style="text-align: left; padding: 10px;" onclick="alert('Backup: Tap the \'Backup\' button in the main screen to download your tasks and wards as a file.
 
@@ -557,6 +557,16 @@ Import: Tap the \'Restore\' button to select your backup file and load your prev
         commitInlineEdit(editingTaskId);
       }
     });
+
+    
+    function openTutorial(type) {
+      closeAboutModal();
+      if (type === 'home') {
+        document.getElementById('tutorial-home-modal').style.display = 'flex';
+      } else if (type === 'backup') {
+        document.getElementById('tutorial-backup-modal').style.display = 'flex';
+      }
+    }
 
     function openAboutModal() {
       if (editingTaskId !== null) commitInlineEdit(editingTaskId);
