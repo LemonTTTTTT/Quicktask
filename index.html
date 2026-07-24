@@ -3,7 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Quick Tasks - Hospital Ward Edition</title>
+  <title>Quick Tasks</title>
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Quick Tasks">
+
+  <!-- Icon for Apple Home Screen -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231890ff'/><path d='M30 50 L45 65 L70 35' stroke='white' stroke-width='8' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+
   <style>
     :root {
       --bg: #f8f9fa;
@@ -132,7 +140,7 @@
       padding: 8px; 
       -webkit-overflow-scrolling: touch; 
       padding-top: 130px; 
-      padding-bottom: 110px;
+      padding-bottom: calc(45vh + env(safe-area-inset-bottom, 0px));
     }
 
     .empty-state { text-align: center; color: #8c8c8c; margin-top: 15vh; }
@@ -146,17 +154,11 @@
     }
 
     
-    @keyframes checkBounce {
-      0% { transform: scale(1); }
-      50% { transform: scale(0.95); }
-      100% { transform: scale(1); }
-    }
-    .task-item { 
-      transition: opacity 0.3s ease, background-color 0.3s ease;
-      animation: checkBounce 0.3s ease-out;
-    }
+
+
 
     .task-item { 
+      transition: transform 0.3s ease, opacity 0.3s ease;
       background: var(--card-bg); 
       border: 1px solid var(--border); 
       border-radius: 6px; 
@@ -285,94 +287,14 @@
       left: 0;
       right: 0;
       background: var(--card-bg); 
-      padding: 8px 12px; 
+      padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)); 
       border-top: 1px solid var(--border); 
       display: flex; 
       flex-direction: column; 
       gap: 6px;
       z-index: 1000;
     }
-    
-    .input-box { 
-      width: 100%; 
-      padding: 10px 12px; 
-      border: 1px solid var(--border); 
-      border-radius: 6px; 
-      font-size: 16px; 
-      outline: none; 
-      -webkit-appearance: none; 
-    }
-    .input-box:focus { border-color: var(--primary); }
-    .btn-group { display: flex; gap: 6px; }
-    .add-btn { flex: 1; padding: 8px; border: 1px solid var(--border); background: #fafafa; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
-    .add-btn.high { color: var(--high); }
-    .add-btn.mid { color: var(--mid); }
-    .add-btn.low { color: var(--low); }
-
-    .modal-backdrop {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.4);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 2000;
-    }
-    .modal-content {
-      background: white;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 400px;
-      padding: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; }
-    .close-modal-btn { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: #8c8c8c; }
-    
-    .ward-select-list { display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow-y: auto; }
-    .ward-select-item {
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: #fafafa;
-      font-weight: 500;
-      font-size: 0.85rem;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .ward-select-item.selected { background: #e6f7ff; border-color: var(--primary); color: var(--primary); font-weight: 600; }
-    .ward-select-item.clear-item { background: #fff1f0; border-color: #ffa39e; color: #ff4d4f; }
-
-    .ward-manage-list { display: flex; flex-direction: column; gap: 6px; max-height: 250px; overflow-y: auto; }
-    .ward-manage-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; }
-    .item-controls { display: flex; gap: 4px; }
-    .icon-btn { background: none; border: none; cursor: pointer; font-size: 0.8rem; padding: 2px 4px; }
-    .modal-footer { display: flex; gap: 6px; }
-    .modal-input { flex: 1; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 16px; -webkit-appearance: none; }
-
-    /* About / Disclaimer Modal Styles */
-    .about-body {
-      font-size: 0.85rem;
-      color: #444;
-      line-height: 1.4;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      max-height: 60vh;
-      overflow-y: auto;
-      padding-right: 4px;
-    }
-    .about-section-title {
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 2px;
-    }
-  </style>
+    </style></style>
 </head>
 <body>
 
@@ -634,7 +556,7 @@
         // Use timeout only for scrolling so focus happens synchronously in the event handler
         setTimeout(() => {
             input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 50);
+        }, 400);
       }
     }
 
