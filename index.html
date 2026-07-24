@@ -891,12 +891,11 @@
       return [...sortTasks(filtered.filter(t => !t.completed)), ...sortTasks(filtered.filter(t => t.completed))];
     }
 
-// Add FLIP animation wrapper for renderWithAnimation
+
     function renderWithAnimation() {
       const listContainer = document.getElementById('task-list');
       const emptyState = document.getElementById('empty-state');
 
-      // 1. FIRST: measure current positions
       const taskNodes = listContainer.querySelectorAll('.task-item');
       const firstPositions = {};
       taskNodes.forEach(node => {
@@ -913,10 +912,11 @@
       }
       emptyState.style.display = 'none';
 
-      // 2. Render new HTML
       listContainer.innerHTML = sortedTasks.map(task => {
         const isEditing = editingTaskId === task.id;
 
+        // --- ORIGINAL HTML GENERATION ---
+        
         if (isEditing) {
           return `
             <div class="task-item" data-id="${task.id}">
@@ -924,43 +924,46 @@
                 <input type="text" id="edit-input-${task.id}" class="inline-edit-input" value="${escapeHtml(task.text)}" onkeydown="if(event.key==='Enter') commitInlineEdit(${task.id})">
                 <div class="inline-urgency-selector">
                   <span class="urgency-label">Urgency:</span>
-                  <button type="button" class="urgency-opt-btn opt-high ${task.priority === 'high' ? 'active' : ''}" onclick="setInlinePriority('high', ${task.id})">High</button>
-                  <button type="button" class="urgency-opt-btn opt-mid ${task.priority === 'mid' ? 'active' : ''}" onclick="setInlinePriority('mid', ${task.id})">Mid</button>
-                  <button type="button" class="urgency-opt-btn opt-low ${task.priority === 'low' ? 'active' : ''}" onclick="setInlinePriority('low', ${task.id})">Low</button>
-                </div>
-                <div class="inline-edit-actions">
-                  <button class="inline-btn cancel" onclick="cancelInlineEdit(event)">Cancel</button>
-                  <button class="inline-btn save" onclick="commitInlineEdit(${task.id})">Save</button>
+                  <button type="button" class="urgency-opt-btn opt-high ${task.priority === 'high' ? 'selected' : ''}" ontouchstart="changeUrgencyDirect(${task.id}, 'high', event)" onclick="changeUrgencyDirect(${task.id}, 'high', event)">High</button>
+                  <button type="button" class="urgency-opt-btn opt-mid ${task.priority === 'mid' ? 'selected' : ''}" ontouchstart="changeUrgencyDirect(${task.id}, 'mid', event)" onclick="changeUrgencyDirect(${task.id}, 'mid', event)">Mid</button>
+                  <button type="button" class="urgency-opt-btn opt-low ${task.priority === 'low' ? 'selected' : ''}" ontouchstart="changeUrgencyDirect(${task.id}, 'low', event)" onclick="changeUrgencyDirect(${task.id}, 'low', event)">Low</button>
                 </div>
               </div>
-            </div>
-          `;
-        } else {
-          return `
-            <div class="task-item ${task.completed ? 'completed' : ''} priority-${task.priority}" data-id="${task.id}">
-              <div class="task-content">
-                <div class="task-meta">
-                  <span class="task-ward">${escapeHtml(task.ward)}</span>
-                  <span class="task-date">${formatDate(task.timestamp)}</span>
-                </div>
-                <div class="task-text">${escapeHtml(task.text)}</div>
-              </div>
-              <div class="task-actions">
-                <button class="action-btn" onclick="toggleTask(${task.id})" title="Toggle Complete">
-                  ${task.completed ? '↺' : '✓'}
-                </button>
-                <button class="edit-trigger-btn" onclick="startEditing(${task.id}, event)">✏️</button>
-                <button class="action-btn delete-btn" onclick="deleteTask(${task.id})" title="Delete">✕</button>
+              <div class="task-actions-right">
+                <button class="delete-cross-btn" onclick="deleteTask(${task.id})" title="Delete">❌</button>
               </div>
             </div>
           `;
         }
+
+        return `
+          <div class="task-item ${task.completed ? 'completed' : ''}" data-id="${task.id}">
+            <button class="action-btn" onclick="toggleTask(${task.id})" title="Toggle Complete">✓</button>
+            <div class="task-left">
+              <div class="task-details">
+                <div class="badges">
+                  <span class="badge badge-${task.priority}">${task.priority}</span>
+                  ${task.ward 
+                    ? `<span class="badge badge-ward" onclick="openTaskWardModal(${task.id})">${escapeHtml(task.ward)} ✏️</span>` 
+                    : `<span class="badge badge-no-ward" onclick="openTaskWardModal(${task.id})">+ Ward</span>`
+                  }
+                  <span class="task-time">${formatDate(task.createdAt)}</span>
+                </div>
+                <span class="task-text">${escapeHtml(task.text)}</span>
+              </div>
+            </div>
+            <div class="task-actions-right">
+              <button class="edit-trigger-btn" onclick="startEditing(${task.id}, event)">✏️</button>
+              <button class="delete-cross-btn" onclick="deleteTask(${task.id})">❌</button>
+            </div>
+          </div>
+        `;
+        // --- END ORIGINAL HTML GENERATION ---
+
       }).join('');
 
-      // 3. LAST: measure new positions
       const newTaskNodes = listContainer.querySelectorAll('.task-item');
 
-      // 4. INVERT & PLAY
       newTaskNodes.forEach(node => {
         const id = node.getAttribute('data-id');
         const first = firstPositions[id];
@@ -969,23 +972,19 @@
           const deltaY = first.top - last.top;
 
           if (deltaY !== 0) {
-            // INVERT: move to old position immediately without transition
             node.style.transition = 'none';
             node.style.transform = `translateY(${deltaY}px)`;
-            node.style.zIndex = '100'; // Bring animating item to front
+            node.style.zIndex = '100';
 
-            // Force reflow
-            node.getBoundingClientRect();
+            node.getBoundingClientRect(); // reflow
 
-            // PLAY: animate back to new position
             requestAnimationFrame(() => {
               node.style.transition = 'transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)';
               node.style.transform = 'translateY(0)';
-              setTimeout(() => { node.style.zIndex = ''; }, 400); // Reset zIndex after animation
+              setTimeout(() => { node.style.zIndex = ''; }, 400);
             });
           }
         } else {
-          // New task animation (fade in from top)
           node.style.transition = 'none';
           node.style.opacity = '0';
           node.style.transform = 'translateY(-10px)';
@@ -998,6 +997,7 @@
         }
       });
     }
+
 
     function escapeHtml(str) {
       return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
