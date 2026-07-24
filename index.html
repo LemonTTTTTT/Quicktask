@@ -48,7 +48,6 @@
       overflow: hidden;
     }
     
-    /* Fixed Top Section: Ward Bar & Header Always Visible */
     .top-fixed-container {
       position: absolute;
       top: 0;
@@ -83,7 +82,6 @@
     .action-link { border: none; background: none; color: var(--primary); font-size: 0.75rem; cursor: pointer; text-decoration: none; font-weight: 500; }
     .clear-btn { border: none; background: none; color: #ff4d4f; font-size: 0.75rem; cursor: pointer; font-weight: 500; }
 
-    /* Hospital Ward Navigation Bar */
     .ward-section {
       background: var(--card-bg);
       padding: 8px 12px;
@@ -176,7 +174,7 @@
     .task-details { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
     
     .badges { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
-    .badge { font-size: 0.65rem; font-weight: 600; padding: 1px 6px; border-radius: 8px; text-transform: uppercase; color: white; align-self: flex-start; }
+    .badge { font-size: 0.62rem; font-weight: 600; padding: 1px 5px; border-radius: 6px; text-transform: uppercase; color: white; align-self: center; }
     .badge-high { background-color: var(--high); }
     .badge-mid { background-color: var(--mid); }
     .badge-low { background-color: var(--low); }
@@ -195,7 +193,7 @@
       cursor: pointer;
     }
 
-    .task-time { font-size: 0.68rem; color: #8c8c8c; display: flex; align-items: center; gap: 4px; }
+    .task-time { font-size: 0.65rem; color: #8c8c8c; margin-left: 2px; font-weight: 500; }
 
     .action-btn { 
       background: none; 
@@ -234,7 +232,6 @@
       border-radius: 4px;
     }
 
-    /* Inline Edit Container */
     .inline-edit-container {
       display: flex;
       flex-direction: column;
@@ -246,7 +243,7 @@
       padding: 8px 10px;
       border: 1px solid var(--primary);
       border-radius: 6px;
-      font-size: 16px; /* Prevents auto zoom */
+      font-size: 16px;
       outline: none;
       -webkit-appearance: none;
     }
@@ -268,7 +265,6 @@
     .urgency-opt-btn.opt-mid.selected { background: var(--mid); color: white; border-color: var(--mid); }
     .urgency-opt-btn.opt-low.selected { background: var(--low); color: white; border-color: var(--low); }
 
-    /* Footer Container */
     footer { 
       position: absolute;
       bottom: 0;
@@ -288,7 +284,7 @@
       padding: 10px 12px; 
       border: 1px solid var(--border); 
       border-radius: 6px; 
-      font-size: 16px; /* Prevents auto zoom */
+      font-size: 16px; 
       outline: none; 
       -webkit-appearance: none; 
     }
@@ -299,7 +295,6 @@
     .add-btn.mid { color: var(--mid); }
     .add-btn.low { color: var(--low); }
 
-    /* Modals */
     .modal-backdrop {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -350,7 +345,6 @@
 <body>
 
   <div class="app-container" id="app-container">
-    <!-- Fixed Top Container -->
     <div class="top-fixed-container" id="top-fixed">
       <header>
         <h1>⚡ Quick Tasks</h1>
@@ -374,7 +368,6 @@
         </div>
       </div>
 
-      <!-- Ward Selection Navigation Bar -->
       <div class="ward-section">
         <span class="ward-label">Ward:</span>
         <div class="ward-chips" id="ward-chips"></div>
@@ -382,7 +375,6 @@
       </div>
     </div>
 
-    <!-- Scrollable Task Container -->
     <main id="main-content">
       <div id="empty-state" class="empty-state">
         <div class="empty-icon">✓</div>
@@ -391,7 +383,6 @@
       <div id="task-list" class="task-list"></div>
     </main>
 
-    <!-- Fixed Footer Input -->
     <footer id="app-footer">
       <input type="text" id="task-input" class="input-box" placeholder="New task..." onkeydown="if(event.key==='Enter') addTask('mid')">
       <div class="btn-group">
@@ -402,7 +393,6 @@
     </footer>
   </div>
 
-  <!-- Ward Selection Modal -->
   <div id="task-ward-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content">
       <div class="modal-header">
@@ -413,7 +403,6 @@
     </div>
   </div>
 
-  <!-- Ward Management Modal -->
   <div id="ward-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content">
       <div class="modal-header">
@@ -439,7 +428,6 @@
 
     const urgencyMap = { high: 1, mid: 2, low: 3 };
 
-    // Prevent Safari from page jumping/shifting when clicking text inputs
     function preventSafariInputScroll(el) {
       if (!el) return;
       el.addEventListener('focus', (e) => {
@@ -451,7 +439,6 @@
       });
     }
 
-    // Dynamic viewport handler for mobile Safari
     function handleViewportResize() {
       if (!window.visualViewport) return;
       
@@ -883,9 +870,9 @@
                     ? `<span class="badge badge-ward" onclick="openTaskWardModal(${task.id})">${escapeHtml(task.ward)} ✏️</span>` 
                     : `<span class="badge badge-no-ward" onclick="openTaskWardModal(${task.id})">+ Ward</span>`
                   }
+                  <span class="task-time">${formatDate(task.createdAt)}</span>
                 </div>
                 <span class="task-text">${escapeHtml(task.text)}</span>
-                <span class="task-time">${formatDate(task.createdAt)}</span>
               </div>
             </div>
             <div class="task-actions-right">
