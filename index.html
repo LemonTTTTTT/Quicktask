@@ -387,7 +387,7 @@
       <header>
         <h1>⚡ Quick Tasks</h1>
         <div class="header-actions">
-          <button class="info-btn" onclick="openAboutModal()">ℹ️ Disclaimer & Info</button>
+          <button class="info-btn" onclick="openAboutModal()">⚙️ Main Settings</button>
         </div>
       </header>
 
@@ -435,23 +435,41 @@
   </div>
 
   <!-- Disclaimer & Acknowledgments Modal -->
-  <div id="about-modal" class="modal-backdrop" style="display: none;">
+  
+<div id="about-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Disclaimer & Acknowledgments</h3>
+        <h3>Main Settings</h3>
         <button class="close-modal-btn" onclick="closeAboutModal()">&times;</button>
       </div>
       <div class="about-body">
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <button class="add-btn" style="text-align: left; padding: 10px;" onclick="alert('iOS: Tap the Share icon (square with arrow) at the bottom, then tap \'Add to Home Screen\'.
+
+Android: Tap the 3 dots menu at the top right, then tap \'Add to Home screen\'.')">📱 How to Add to Home Screen</button>
+
+          <button class="add-btn" style="text-align: left; padding: 10px;" onclick="alert('Backup: Tap the \'Backup\' button in the main screen to download your tasks and wards as a file.
+
+Import: Tap the \'Restore\' button to select your backup file and load your previous data.')">💾 How to Backup & Import</button>
+
+          <button class="add-btn" style="text-align: left; padding: 10px; color: var(--high); border-color: #ffccc7; background: #fff2f0;" onclick="factoryReset()">⚠️ Factory Reset (Clear All Data)</button>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid var(--border); margin: 4px 0;">
+
         <div>
           <div class="about-section-title">🔒 Data Privacy & Disclaimer</div>
           <p>All data stays strictly local to your browser storage. This application functions solely as an interface for displaying and organizing your local data. Please remember to back up your tasks regularly to prevent accidental data loss, which can occur if your browser cache or site data is cleared.</p>
         </div>
         <div>
-          <div class="about-section-title">🙏 Acknowledgments & Inspiration</div>
-          <p>We would like to express our deepest gratitude to <strong>up.railway.app</strong> for being a tremendous source of inspiration. Special thanks as well to <strong>GitHub</strong>, and our AI collaborator <strong>Gemini</strong>, for helping make this project possible.</p>
+          <div class="about-section-title">🙏 Acknowledgments</div>
+          <p>We would like to express our deepest gratitude to <strong>Quick Med @ up.railway.app</strong> for being a tremendous source of inspiration. Special thanks as well to <strong>GitHub</strong>, and our AI collaborator <strong>Gemini</strong>, for helping make this project possible.</p>
         </div>
       </div>
     </div>
+  </div>
+
   </div>
 
   <div id="task-ward-modal" class="modal-backdrop" style="display: none;">
@@ -835,6 +853,19 @@
         tasks = [];
         editingTaskId = null;
         saveAndRender();
+      }
+    }
+
+    
+    function factoryReset() {
+      if (confirm('⚠️ WARNING: This will permanently delete ALL tasks and ALL wards. You cannot undo this action!\n\nAre you absolutely sure you want to factory reset?')) {
+        localStorage.removeItem('qt_tasks');
+        localStorage.removeItem('qt_wards');
+        tasks = [];
+        wards = [];
+        saveAndRender();
+        closeAboutModal();
+        alert('All data has been wiped. App is now in its initial state.');
       }
     }
 
