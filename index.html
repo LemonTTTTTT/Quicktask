@@ -445,9 +445,7 @@
       <div class="about-body">
 
         <div style="display: flex; flex-direction: column; gap: 8px;">
-          <button class="add-btn" style="text-align: left; padding: 10px;" onclick="openTutorial('home')">📱 How to Add to Home Screen</button>
-
-          <button class="add-btn" style="text-align: left; padding: 10px;" onclick="openTutorial('backup')">💾 How to Backup & Restore</button>
+          
 
           <button class="add-btn" style="text-align: left; padding: 10px;" onclick="alert('Backup: Tap the \'Backup\' button in the main screen to download your tasks and wards as a file.
 
@@ -559,15 +557,6 @@ Import: Tap the \'Restore\' button to select your backup file and load your prev
     });
 
     
-    function openTutorial(type) {
-      closeAboutModal();
-      if (type === 'home') {
-        document.getElementById('tutorial-home-modal').style.display = 'flex';
-      } else if (type === 'backup') {
-        document.getElementById('tutorial-backup-modal').style.display = 'flex';
-      }
-    }
-
     function openAboutModal() {
       if (editingTaskId !== null) commitInlineEdit(editingTaskId);
       document.getElementById('about-modal').style.display = 'flex';
@@ -891,7 +880,7 @@ Import: Tap the \'Restore\' button to select your backup file and load your prev
       lastBackupTime = now;
 
       const d = new Date();
-      const filename = `quick_tasks_backup_${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.json`;
+      const filename = `quick_tasks_backup_${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}.json`;
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ tasks, wards }, null, 2));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute("href", dataStr);
