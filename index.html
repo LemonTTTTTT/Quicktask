@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <!-- Prevents Safari Auto Zoom on text focus -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Quick Tasks - Hospital Ward Edition</title>
   <style>
@@ -30,7 +29,10 @@
       color: var(--text); 
       height: 100%;
       width: 100%;
-      overflow: hidden; /* Prevents whole page from scrolling offscreen on iOS keyboard popup */
+      overflow: hidden; 
+      position: fixed;
+      left: 0;
+      top: 0;
       -webkit-tap-highlight-color: transparent;
     }
 
@@ -38,16 +40,17 @@
       display: flex;
       flex-direction: column;
       height: 100vh;
-      height: 100dvh; /* Dynamic viewport height for iOS */
+      height: 100dvh;
       width: 100%;
       position: absolute;
       top: 0;
       left: 0;
+      overflow: hidden;
     }
     
-    /* Fixed Top Container: Always locks Header & Ward List at top of screen */
+    /* Fixed Top Section: Ward Bar & Header Always Visible */
     .top-fixed-container {
-      position: fixed;
+      position: absolute;
       top: 0;
       left: 0;
       right: 0;
@@ -127,12 +130,11 @@
       overflow-y: auto; 
       padding: 8px; 
       -webkit-overflow-scrolling: touch; 
-      /* Dynamic padding dynamically calculated via JavaScript on load */
       padding-top: 130px; 
       padding-bottom: 110px;
     }
 
-    .empty-state { text-align: center; color: #8c8c8c; margin-top: 20vh; }
+    .empty-state { text-align: center; color: #8c8c8c; margin-top: 15vh; }
     .empty-icon { font-size: 1.8rem; margin-bottom: 4px; }
 
     .task-list { 
@@ -150,7 +152,6 @@
       display: flex; 
       align-items: center; 
       gap: 8px;
-      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
     .task-item.completed { 
@@ -233,41 +234,43 @@
       border-radius: 4px;
     }
 
+    /* Inline Edit Container */
     .inline-edit-container {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
       width: 100%;
     }
     .inline-edit-input {
       width: 100%;
-      padding: 6px 8px;
+      padding: 8px 10px;
       border: 1px solid var(--primary);
-      border-radius: 4px;
-      font-size: 16px; /* Prevents iOS auto pinch/zoom */
+      border-radius: 6px;
+      font-size: 16px; /* Prevents auto zoom */
       outline: none;
       -webkit-appearance: none;
     }
-    .inline-urgency-selector { display: flex; gap: 4px; align-items: center; }
-    .urgency-label { font-size: 0.7rem; font-weight: 600; color: #666; }
+    .inline-urgency-selector { display: flex; gap: 6px; align-items: center; }
+    .urgency-label { font-size: 0.75rem; font-weight: 600; color: #666; }
     .urgency-opt-btn {
       flex: 1;
-      padding: 4px 6px;
+      padding: 6px;
       border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 0.7rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
       font-weight: 600;
       background: #fafafa;
       color: #666;
       cursor: pointer;
       text-transform: uppercase;
     }
-    .urgency-opt-btn.opt-high.selected { background: var(--high); color: white; }
-    .urgency-opt-btn.opt-mid.selected { background: var(--mid); color: white; }
-    .urgency-opt-btn.opt-low.selected { background: var(--low); color: white; }
+    .urgency-opt-btn.opt-high.selected { background: var(--high); color: white; border-color: var(--high); }
+    .urgency-opt-btn.opt-mid.selected { background: var(--mid); color: white; border-color: var(--mid); }
+    .urgency-opt-btn.opt-low.selected { background: var(--low); color: white; border-color: var(--low); }
 
+    /* Footer Container */
     footer { 
-      position: fixed;
+      position: absolute;
       bottom: 0;
       left: 0;
       right: 0;
@@ -347,7 +350,7 @@
 <body>
 
   <div class="app-container" id="app-container">
-    <!-- Always Fixed at Top -->
+    <!-- Fixed Top Container -->
     <div class="top-fixed-container" id="top-fixed">
       <header>
         <h1>⚡ Quick Tasks</h1>
@@ -436,7 +439,19 @@
 
     const urgencyMap = { high: 1, mid: 2, low: 3 };
 
-    // iOS Safari Visual Viewport Handler: Adjusts view area live when soft keyboard opens
+    // Prevent Safari from page jumping/shifting when clicking text inputs
+    function preventSafariInputScroll(el) {
+      if (!el) return;
+      el.addEventListener('focus', (e) => {
+        el.style.transform = 'translateY(-2000px)';
+        requestAnimationFrame(() => {
+          el.style.transform = '';
+          window.scrollTo(0, 0);
+        });
+      });
+    }
+
+    // Dynamic viewport handler for mobile Safari
     function handleViewportResize() {
       if (!window.visualViewport) return;
       
@@ -448,17 +463,14 @@
       const viewportHeight = window.visualViewport.height;
       const viewportTop = window.visualViewport.offsetTop;
 
-      // Ensure container fits inside visual viewport when keyboard is active
       appContainer.style.height = `${viewportHeight}px`;
       appContainer.style.top = `${viewportTop}px`;
 
-      // Recalculate margins dynamically
       const topHeight = topFixed.offsetHeight;
       const footerHeight = footer.offsetHeight;
       mainContent.style.paddingTop = `${topHeight + 8}px`;
       mainContent.style.paddingBottom = `${footerHeight + 8}px`;
 
-      // Always reset body scroll position to prevent iOS top shift
       window.scrollTo(0, 0);
     }
 
@@ -469,6 +481,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       setTimeout(handleViewportResize, 100);
+      preventSafariInputScroll(document.getElementById('task-input'));
     });
 
     document.addEventListener('click', function(e) {
@@ -560,25 +573,36 @@
       }
       editingTaskId = id;
       renderWithAnimation();
+      
       setTimeout(() => {
         const input = document.getElementById(`edit-input-${id}`);
         if (input) {
+          preventSafariInputScroll(input);
           input.focus();
           input.setSelectionRange(input.value.length, input.value.length);
+          input.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
       }, 50);
     }
 
-    function changeUrgencyDirect(id, priority) {
+    function changeUrgencyDirect(id, priority, event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
       const task = tasks.find(t => t.id === id);
       if (task) task.priority = priority;
-      const buttons = document.querySelectorAll('.urgency-opt-btn');
-      buttons.forEach(btn => {
-        btn.classList.remove('selected');
-        if (btn.classList.contains(`opt-${priority}`)) {
-          btn.classList.add('selected');
-        }
-      });
+      
+      const itemContainer = document.querySelector(`[data-id="${id}"]`);
+      if (itemContainer) {
+        const buttons = itemContainer.querySelectorAll('.urgency-opt-btn');
+        buttons.forEach(btn => {
+          btn.classList.remove('selected');
+          if (btn.classList.contains(`opt-${priority}`)) {
+            btn.classList.add('selected');
+          }
+        });
+      }
     }
 
     function commitInlineEdit(id) {
@@ -647,6 +671,7 @@
       if (editingTaskId !== null) commitInlineEdit(editingTaskId);
       renderWardModalList();
       document.getElementById('ward-modal').style.display = 'flex';
+      preventSafariInputScroll(document.getElementById('new-ward-input'));
     }
 
     function closeWardModal() {
@@ -835,9 +860,9 @@
                 <input type="text" id="edit-input-${task.id}" class="inline-edit-input" value="${escapeHtml(task.text)}" onkeydown="if(event.key==='Enter') commitInlineEdit(${task.id})">
                 <div class="inline-urgency-selector">
                   <span class="urgency-label">Urgency:</span>
-                  <button class="urgency-opt-btn opt-high ${task.priority === 'high' ? 'selected' : ''}" onclick="changeUrgencyDirect(${task.id}, 'high')">High</button>
-                  <button class="urgency-opt-btn opt-mid ${task.priority === 'mid' ? 'selected' : ''}" onclick="changeUrgencyDirect(${task.id}, 'mid')">Mid</button>
-                  <button class="urgency-opt-btn opt-low ${task.priority === 'low' ? 'selected' : ''}" onclick="changeUrgencyDirect(${task.id}, 'low')">Low</button>
+                  <button type="button" class="urgency-opt-btn opt-high ${task.priority === 'high' ? 'selected' : ''}" ontouchstart="changeUrgencyDirect(${task.id}, 'high', event)" onclick="changeUrgencyDirect(${task.id}, 'high', event)">High</button>
+                  <button type="button" class="urgency-opt-btn opt-mid ${task.priority === 'mid' ? 'selected' : ''}" ontouchstart="changeUrgencyDirect(${task.id}, 'mid', event)" onclick="changeUrgencyDirect(${task.id}, 'mid', event)">Mid</button>
+                  <button type="button" class="urgency-opt-btn opt-low ${task.priority === 'low' ? 'selected' : ''}" ontouchstart="changeUrgencyDirect(${task.id}, 'low', event)" onclick="changeUrgencyDirect(${task.id}, 'low', event)">Low</button>
                 </div>
               </div>
               <div class="task-actions-right">
