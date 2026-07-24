@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Tasks">
 
   <!-- Icon for Apple Home Screen -->
-  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231890ff'/><path d='M30 50 L45 65 L70 35' stroke='white' stroke-width='8' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+  <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Check_mark_button_icon_blue.svg/512px-Check_mark_button_icon_blue.svg.png"><rect width='100' height='100' rx='20' fill='%231890ff'/><path d='M30 50 L45 65 L70 35' stroke='white' stroke-width='8' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
 
   <style>
     :root {
@@ -56,7 +56,7 @@
       overflow: hidden;
     }
     
-    .top-fixed-container {
+        .top-fixed-container {
       position: absolute;
       top: 0;
       left: 0;
@@ -64,6 +64,7 @@
       z-index: 1000;
       background: var(--card-bg);
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      padding-top: env(safe-area-inset-top, 0px);
     }
 
     header { background: var(--card-bg); padding: 8px 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
@@ -139,7 +140,7 @@
       overflow-y: auto; 
       padding: 8px; 
       -webkit-overflow-scrolling: touch; 
-      padding-top: 130px; 
+      padding-top: calc(130px + env(safe-area-inset-top, 0px)); 
       padding-bottom: calc(45vh + env(safe-area-inset-bottom, 0px));
     }
 
@@ -283,7 +284,7 @@
       left: 0;
       right: 0;
       background: var(--card-bg); 
-      padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)); 
+      padding: 8px 12px max(8px, env(safe-area-inset-bottom, 0px)); 
       border-top: 1px solid var(--border); 
       display: flex; 
       flex-direction: column; 
