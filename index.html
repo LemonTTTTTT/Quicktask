@@ -62,7 +62,8 @@
     h1 { font-size: 1.1rem; font-weight: 600; }
     
     .header-actions { display: flex; gap: 8px; align-items: center; }
-    .info-btn { background: none; border: 1px solid var(--border); border-radius: 12px; padding: 2px 8px; font-size: 0.75rem; cursor: pointer; color: #555; font-weight: 500; }
+    .info-btn { background: none; border: 1px solid var(--border); border-radius: 12px; padding: 2px 8px; font-size: 0.75rem; cursor: pointer; color: #555; font-weight: 500; transition: background 0.2s; }
+    .info-btn:active { background: #f0f2f5; }
 
     .backup-alert {
       background-color: #fff2f0;
@@ -78,7 +79,7 @@
 
     .controls { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: var(--card-bg); border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 6px; }
     .toggle-group { display: flex; background: #f0f2f5; border-radius: 6px; padding: 2px; }
-    .toggle-btn { border: none; background: none; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; cursor: pointer; color: #666; font-weight: 500; }
+    .toggle-btn { border: none; background: none; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; cursor: pointer; color: #666; font-weight: 500; transition: all 0.2s ease; }
     .toggle-btn.active { background: white; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     
     .backup-actions { display: flex; gap: 8px; align-items: center; }
@@ -106,7 +107,7 @@
       font-weight: 600;
       cursor: pointer;
       white-space: nowrap;
-      transition: 0.2s;
+      transition: all 0.2s ease;
     }
     .ward-chip.active {
       background: var(--primary);
@@ -124,7 +125,9 @@
       white-space: nowrap;
       font-weight: 500;
       margin-left: auto;
+      transition: background 0.2s;
     }
+    .settings-btn:active { background: #f0f2f5; }
 
     main { 
       flex: 1; 
@@ -145,6 +148,7 @@
       position: relative;
     }
 
+    /* Smooth transition animations for task items */
     .task-item { 
       background: var(--card-bg); 
       border: 1px solid var(--border); 
@@ -153,6 +157,11 @@
       display: flex; 
       align-items: center; 
       gap: 8px;
+      transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                  background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                  transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                  max-height 0.3s ease, margin 0.3s ease, padding 0.3s ease;
+      will-change: opacity, transform;
     }
     
     .task-item.completed { 
@@ -166,6 +175,7 @@
       word-break: break-word;
       overflow-wrap: anywhere;
       white-space: normal;
+      transition: color 0.3s ease;
     }
     
     .task-item.completed .task-text { 
@@ -188,13 +198,17 @@
       display: inline-flex;
       align-items: center;
       gap: 2px;
+      transition: opacity 0.2s;
     }
+    .badge-ward:active { opacity: 0.8; }
     
     .badge-no-ward {
       background-color: #e9ecef;
       color: #666;
       cursor: pointer;
+      transition: background 0.2s;
     }
+    .badge-no-ward:active { background: #ced4da; }
 
     .task-time { font-size: 0.65rem; color: #8c8c8c; margin-left: 2px; font-weight: 500; }
 
@@ -211,7 +225,11 @@
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                  border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                  transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
+    .action-btn:active { transform: scale(0.9); }
     .task-item.completed .action-btn { 
       background-color: #52c41a; 
       border-color: #52c41a; 
@@ -233,7 +251,9 @@
       cursor: pointer;
       padding: 2px 4px;
       border-radius: 4px;
+      transition: color 0.2s;
     }
+    .edit-trigger-btn:active, .delete-cross-btn:active { color: var(--text); }
 
     .inline-edit-container {
       display: flex;
@@ -249,6 +269,7 @@
       font-size: 16px;
       outline: none;
       -webkit-appearance: none;
+      background: #ffffff;
     }
     .inline-urgency-selector { display: flex; gap: 6px; align-items: center; }
     .urgency-label { font-size: 0.75rem; font-weight: 600; color: #666; }
@@ -263,6 +284,7 @@
       color: #666;
       cursor: pointer;
       text-transform: uppercase;
+      transition: all 0.2s ease;
     }
     .urgency-opt-btn.opt-high.selected { background: var(--high); color: white; border-color: var(--high); }
     .urgency-opt-btn.opt-mid.selected { background: var(--mid); color: white; border-color: var(--mid); }
@@ -290,10 +312,12 @@
       font-size: 16px; 
       outline: none; 
       -webkit-appearance: none; 
+      transition: border-color 0.2s;
     }
     .input-box:focus { border-color: var(--primary); }
     .btn-group { display: flex; gap: 6px; }
-    .add-btn { flex: 1; padding: 8px; border: 1px solid var(--border); background: #fafafa; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+    .add-btn { flex: 1; padding: 8px; border: 1px solid var(--border); background: #fafafa; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .add-btn:active { background: #f0f2f5; }
     .add-btn.high { color: var(--high); }
     .add-btn.mid { color: var(--mid); }
     .add-btn.low { color: var(--low); }
@@ -306,6 +330,13 @@
       justify-content: center;
       align-items: center;
       z-index: 2000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+    .modal-backdrop.show {
+      opacity: 1;
+      visibility: visible;
     }
     .modal-content {
       background: white;
@@ -317,6 +348,11 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
+      transform: scale(0.95);
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .modal-backdrop.show .modal-content {
+      transform: scale(1);
     }
     .modal-header { display: flex; justify-content: space-between; align-items: center; }
     .close-modal-btn { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: #8c8c8c; }
@@ -333,6 +369,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      transition: background 0.2s;
     }
     .ward-select-item.selected { background: #e6f7ff; border-color: var(--primary); color: var(--primary); font-weight: 600; }
     .ward-select-item.clear-item { background: #fff1f0; border-color: #ffa39e; color: #ff4d4f; }
@@ -370,7 +407,7 @@
       <header>
         <h1>⚡ Quick Tasks</h1>
         <div class="header-actions">
-          <button class="info-btn" onclick="openAboutModal()">ℹ️ Disclaimer & Info</button>
+          <button class="info-btn" onclick="openModal('about-modal')">ℹ️ Disclaimer & Info</button>
         </div>
       </header>
 
@@ -395,7 +432,7 @@
       <div class="ward-section">
         <span class="ward-label">Ward:</span>
         <div class="ward-chips" id="ward-chips"></div>
-        <button class="settings-btn" onclick="openWardModal()">⚙️ Settings</button>
+        <button class="settings-btn" onclick="openModal('ward-modal'); renderWardModalList();">⚙️ Settings</button>
       </div>
     </div>
 
@@ -418,11 +455,11 @@
   </div>
 
   <!-- Disclaimer & Acknowledgments Modal -->
-  <div id="about-modal" class="modal-backdrop" style="display: none;">
+  <div id="about-modal" class="modal-backdrop">
     <div class="modal-content">
       <div class="modal-header">
         <h3>Disclaimer & Acknowledgments</h3>
-        <button class="close-modal-btn" onclick="closeAboutModal()">&times;</button>
+        <button class="close-modal-btn" onclick="closeModal('about-modal')">&times;</button>
       </div>
       <div class="about-body">
         <div>
@@ -437,21 +474,21 @@
     </div>
   </div>
 
-  <div id="task-ward-modal" class="modal-backdrop" style="display: none;">
+  <div id="task-ward-modal" class="modal-backdrop">
     <div class="modal-content">
       <div class="modal-header">
         <h3>Assign Ward</h3>
-        <button class="close-modal-btn" onclick="closeTaskWardModal()">&times;</button>
+        <button class="close-modal-btn" onclick="closeModal('task-ward-modal')">&times;</button>
       </div>
       <div class="ward-select-list" id="task-ward-select-list"></div>
     </div>
   </div>
 
-  <div id="ward-modal" class="modal-backdrop" style="display: none;">
+  <div id="ward-modal" class="modal-backdrop">
     <div class="modal-content">
       <div class="modal-header">
         <h3>Manage Wards</h3>
-        <button class="close-modal-btn" onclick="closeWardModal()">&times;</button>
+        <button class="close-modal-btn" onclick="closeModal('ward-modal')">&times;</button>
       </div>
       <div class="modal-footer">
         <input type="text" id="new-ward-input" class="modal-input" placeholder="New Ward Name...">
@@ -474,7 +511,7 @@
 
     function preventSafariInputScroll(el) {
       if (!el) return;
-      el.addEventListener('focus', (e) => {
+      el.addEventListener('focus', () => {
         el.style.transform = 'translateY(-2000px)';
         requestAnimationFrame(() => {
           el.style.transform = '';
@@ -523,13 +560,23 @@
       }
     });
 
-    function openAboutModal() {
+    function openModal(modalId) {
       if (editingTaskId !== null) commitInlineEdit(editingTaskId);
-      document.getElementById('about-modal').style.display = 'flex';
+      const modal = document.getElementById(modalId);
+      modal.style.display = 'flex';
+      requestAnimationFrame(() => modal.classList.add('show'));
+      if (modalId === 'ward-modal') {
+        preventSafariInputScroll(document.getElementById('new-ward-input'));
+      }
     }
 
-    function closeAboutModal() {
-      document.getElementById('about-modal').style.display = 'none';
+    function closeModal(modalId) {
+      const modal = document.getElementById(modalId);
+      modal.classList.remove('show');
+      setTimeout(() => {
+        modal.style.display = 'none';
+        if (modalId === 'task-ward-modal') activeEditingTaskIdForWard = null;
+      }, 250);
     }
 
     function saveAndRender() {
@@ -614,7 +661,7 @@
       editingTaskId = id;
       renderWithAnimation();
       
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         const input = document.getElementById(`edit-input-${id}`);
         if (input) {
           preventSafariInputScroll(input);
@@ -622,7 +669,7 @@
           input.setSelectionRange(input.value.length, input.value.length);
           input.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
-      }, 50);
+      });
     }
 
     function changeUrgencyDirect(id, priority, event) {
@@ -688,12 +735,7 @@
       }
 
       listContainer.innerHTML = html;
-      document.getElementById('task-ward-modal').style.display = 'flex';
-    }
-
-    function closeTaskWardModal() {
-      activeEditingTaskIdForWard = null;
-      document.getElementById('task-ward-modal').style.display = 'none';
+      openModal('task-ward-modal');
     }
 
     function assignWardToTask(wardName) {
@@ -704,18 +746,7 @@
           saveAndRender();
         }
       }
-      closeTaskWardModal();
-    }
-
-    function openWardModal() {
-      if (editingTaskId !== null) commitInlineEdit(editingTaskId);
-      renderWardModalList();
-      document.getElementById('ward-modal').style.display = 'flex';
-      preventSafariInputScroll(document.getElementById('new-ward-input'));
-    }
-
-    function closeWardModal() {
-      document.getElementById('ward-modal').style.display = 'none';
+      closeModal('task-ward-modal');
     }
 
     function renderWardModalList() {
