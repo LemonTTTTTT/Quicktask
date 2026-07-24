@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quick Tasks - Hospital Ward Edition</title>
+  <style>
+    :root {
+      --bg: #f8f9fa;
+      --card-bg: #ffffff;
+      --text: #212529;
+      --border: #e9ecef;
+      --high: #ff4d4f;
+      --mid: #faad14;
+      --low: #52c41a;
+      --primary: #1890ff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    
+    /* Safari Fix: Ensures click events bubble properly to document level */
+    html, body { 
+      background-color: var(--bg); 
+      color: var(--text); 
+      display: flex; 
+      flex-direction: column; 
+      height: 100vh;
+      cursor: pointer; /* Critical for Safari click delegation */
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    header { background: var(--card-bg); padding: 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 1.25rem; font-weight: 600; }
+    
+    .backup-alert {
+      background-color: #fff2f0;
+      border-bottom: 1px solid #ffccc7;
+      color: #ff4d4f;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .controls { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--card-bg); border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px; }
+    .toggle-group { display: flex; background: #f0f2f5; border-radius: 8px; padding: 2px; }
+    .toggle-btn { border: none; background: none; padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; cursor: pointer; color: #666; font-weight: 500; }
+    .toggle-btn.active { background: white; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    
+    .backup-actions { display: flex; gap: 10px; align-items: center; }
+    .action-link { border: none; background: none; color: var(--primary); font-size: 0.85rem; cursor: pointer; text-decoration: none; font-weight: 500; }
+    .clear-btn { border: none; background: none; color: #ff4d4f; font-size: 0.85rem; cursor: pointer; font-weight: 500; }
+
+    /* Ward Navigation Bar */
+    .ward-section {
+      background: var(--card-bg);
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+    }
+    .ward-label { font-size: 0.8rem; font-weight: 600; color: #666; white-space: nowrap; }
+    .ward-chips { display: flex; gap: 6px; align-items: center; }
+    .ward-chip {
+      background: #f0f2f5;
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      border-radius: 16px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: 0.2s;
+    }
+    .ward-chip.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    .settings-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: #555;
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      white-space: nowrap;
+      font-weight: 500;
+      margin-left: auto;
+    }
+
+    main { flex: 1; overflow-y: auto; padding: 16px; }
+    .empty-state { text-align: center; color: #8c8c8c; margin-top: 30vh; }
+    .empty-icon { font-size: 2rem; margin-bottom: 8px; }
+
+    .task-list { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 8px; 
+      position: relative;
+    }
+
+    .task-item { 
+      background: var(--card-bg); 
+      border: 1px solid var(--border); 
+      border-radius: 8px; 
+      padding: 12px 16px; 
+      display: flex; 
+      align-items: center; 
+      gap: 12px;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .task-item.completed { 
+      opacity: 0.55; 
+      background: #fdfdfd;
+    }
+    .task-item .task-text {
+      font-size: 0.95rem; 
+      font-weight: 500; 
+      transition: color 0.3s, text-decoration-color 0.3s;
+    }
+    .task-item.completed .task-text { 
+      text-decoration: line-through; 
+      color: #8c8c8c; 
+    }
+
+    .task-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+    .task-details { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    
+    .badges { display: flex; gap: 6px; align-items: center; }
+    .badge { font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 12px; text-transform: uppercase; color: white; align-self: flex-start; }
+    .badge-high { background-color: var(--high); }
+    .badge-mid { background-color: var(--mid); }
+    .badge-low { background-color: var(--low); }
+    
+    .badge-ward { 
+      background-color: #722ed1; 
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .badge-ward:hover { opacity: 0.85; }
+    
+    .badge-no-ward {
+      background-color: #e9ecef;
+      color: #666;
+      cursor: pointer;
+    }
+    .badge-no-ward:hover { background-color: #dee2e6; }
+
+    .task-time { font-size: 0.75rem; color: #8c8c8c; display: flex; align-items: center; gap: 4px; }
+
+    /* Completion Tick Button */
+    .action-btn { 
+      background: none; 
+      border: 1px solid var(--border); 
+      border-radius: 50%;
+      width: 26px;
+      height: 26px;
+      color: transparent; 
+      cursor: pointer; 
+      font-size: 0.85rem; 
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s; 
+      flex-shrink: 0;
+    }
+    .action-btn:hover { border-color: #52c41a; color: #52c41a; }
+    .task-item.completed .action-btn { 
+      background-color: #52c41a; 
+      border-color: #52c41a; 
+      color: white; 
+    }
+
+    .task-actions-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .edit-trigger-btn, .delete-cross-btn {
+      background: none;
+      border: none;
+      color: #8c8c8c;
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 4px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .edit-trigger-btn:hover { background: #f0f0f0; color: var(--primary); }
+    .delete-cross-btn:hover { background: #fff1f0; color: #ff4d4f; }
+
+    /* Inline Edit Box Styles */
+    .inline-edit-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+    }
+    .inline-edit-input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--primary);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    .inline-urgency-selector {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .urgency-label { font-size: 0.75rem; font-weight: 600; color: #666; margin-right: 4px; }
+    .urgency-opt-btn {
+      flex: 1;
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #fafafa;
+      color: #666;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: 0.2s;
+    }
+    .urgency-opt-btn.opt-high.selected { background: var(--high); color: white; border-color: var(--high); }
+    .urgency-opt-btn.opt-mid.selected { background: var(--mid); color: white; border-color: var(--mid); }
+    .urgency-opt-btn.opt-low.selected { background: var(--low); color: white; border-color: var(--low); }
+
+    footer { background: var(--card-bg); padding: 12px 16px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+    .input-box { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; outline: none; -webkit-appearance: none; }
+    .input-box:focus { border-color: var(--primary); }
+    .btn-group { display: flex; gap: 8px; }
+    .add-btn { flex: 1; padding: 8px; border: 1px solid var(--border); background: #fafafa; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    .add-btn.high { color: var(--high); }
+    .add-btn.mid { color: var(--mid); }
+    .add-btn.low { color: var(--low); }
+    .add-btn:hover { background: #f0f0f0; }
+
+    /* Modal Styles */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h3 { font-size: 1.1rem; }
+    .close-modal-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #8c8c8c; }
+    
+    .ward-select-list { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
+    .ward-select-item {
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fafafa;
+      font-weight: 500;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: 0.2s;
+    }
+    .ward-select-item:hover { background: #f0f7ff; border-color: var(--primary); }
+    .ward-select-item.selected { background: #e6f7ff; border-color: var(--primary); color: var(--primary); font-weight: 600; }
+    .ward-select-item.clear-item { background: #fff1f0; border-color: #ffa39e; color: #ff4d4f; }
+    .ward-select-item.clear-item:hover { background: #ff4d4f; color: white; }
+
+    .ward-manage-list { display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto; }
+    .ward-manage-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border: 1px solid var(--border); border-radius: 6px; }
+    .ward-manage-item span { font-weight: 500; font-size: 0.9rem; }
+    .item-controls { display: flex; gap: 4px; }
+    .icon-btn { background: none; border: none; cursor: pointer; font-size: 0.9rem; padding: 2px 6px; border-radius: 4px; }
+    .icon-btn:hover { background: #f0f0f0; }
+    .modal-footer { display: flex; gap: 8px; }
+    .modal-input { flex: 1; padding: 8px; border: 1px solid var(--border); border-radius: 6px; -webkit-appearance: none; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>⚡ Quick Tasks</h1>
+  </header>
+
+  <!-- Backup Warning Banner -->
+  <div id="backup-alert" class="backup-alert" style="display: none;">
+    <span>⚠️ Backup Reminder: You haven't backed up your tasks in over 24 hours!</span>
+    <button class="action-link" onclick="exportTasks()">Backup Now</button>
+  </div>
+
+  <div class="controls">
+    <div class="toggle-group">
+      <button class="toggle-btn active" id="sort-time" onclick="setSort('time')">By time</button>
+      <button class="toggle-btn" id="sort-urgency" onclick="setSort('urgency')">By urgency</button>
+    </div>
+    <div class="backup-actions">
+      <button class="action-link" onclick="exportTasks()">📥 Backup</button>
+      <button class="action-link" onclick="document.getElementById('import-file').click()">📤 Restore</button>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importTasks(event)">
+      <button class="clear-btn" onclick="clearAll()">Clear all</button>
+    </div>
+  </div>
+
+  <!-- Hospital Ward Navigation Bar -->
+  <div class="ward-section">
+    <span class="ward-label">Ward:</span>
+    <div class="ward-chips" id="ward-chips"></div>
+    <button class="settings-btn" onclick="openWardModal()">⚙️ Settings</button>
+  </div>
+
+  <main>
+    <div id="empty-state" class="empty-state">
+      <div class="empty-icon">✓</div>
+      <p>No tasks</p>
+    </div>
+    <div id="task-list" class="task-list"></div>
+  </main>
+
+  <footer>
+    <input type="text" id="task-input" class="input-box" placeholder="New task..." onkeydown="if(event.key==='Enter') addTask('mid')">
+    <div class="btn-group">
+      <button class="add-btn high" onclick="addTask('high')">+ High</button>
+      <button class="add-btn mid" onclick="addTask('mid')">+ Mid</button>
+      <button class="add-btn low" onclick="addTask('low')">+ Low</button>
+    </div>
+  </footer>
+
+  <!-- Ward Selector Modal -->
+  <div id="task-ward-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Assign Ward</h3>
+        <button class="close-modal-btn" onclick="closeTaskWardModal()">&times;</button>
+      </div>
+      <div class="ward-select-list" id="task-ward-select-list"></div>
+    </div>
+  </div>
+
+  <!-- Ward Settings Modal -->
+  <div id="ward-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Manage Wards</h3>
+        <button class="close-modal-btn" onclick="closeWardModal()">&times;</button>
+      </div>
+      <div class="modal-footer">
+        <input type="text" id="new-ward-input" class="modal-input" placeholder="New Ward Name...">
+        <button class="add-btn mid" style="flex: 0 0 auto; padding: 8px 12px;" onclick="addWardFromModal()">Add</button>
+      </div>
+      <div class="ward-manage-list" id="ward-manage-list"></div>
+    </div>
+  </div>
+
+  <script>
+    let tasks = JSON.parse(localStorage.getItem('qt_tasks')) || [];
+    let wards = JSON.parse(localStorage.getItem('qt_wards')) || [];
+    let selectedWard = 'All';
+    let editingTaskId = null;
+    let activeEditingTaskIdForWard = null;
+    let lastBackupTime = localStorage.getItem('qt_last_backup') || null;
+    let currentSort = 'time';
+
+    const urgencyMap = { high: 1, mid: 2, low: 3 };
+
+    // Explicit Document Listener for Safari Compatibility
+    document.addEventListener('click', function(e) {
+      if (editingTaskId === null) return;
+      const editContainer = document.querySelector(`[data-id="${editingTaskId}"]`);
+      if (editContainer && !editContainer.contains(e.target)) {
+        commitInlineEdit(editingTaskId);
+      }
+    });
+
+    function saveAndRender() {
+      localStorage.setItem('qt_tasks', JSON.stringify(tasks));
+      localStorage.setItem('qt_wards', JSON.stringify(wards));
+      checkBackupReminder();
+      renderWards();
+      renderWithAnimation();
+    }
+
+    function checkBackupReminder() {
+      const alertBox = document.getElementById('backup-alert');
+      const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+      const now = Date.now();
+
+      if (!lastBackupTime || (now - parseInt(lastBackupTime)) > ONE_DAY_MS) {
+        alertBox.style.display = 'flex';
+      } else {
+        alertBox.style.display = 'none';
+      }
+    }
+
+    // --- Ward Chip Render ---
+    function renderWards() {
+      const container = document.getElementById('ward-chips');
+      
+      let html = `
+        <button class="ward-chip ${selectedWard === 'All' ? 'active' : ''}" onclick="selectWard('All')">
+          All
+        </button>
+      `;
+
+      html += wards.map(w => `
+        <button class="ward-chip ${selectedWard === w ? 'active' : ''}" onclick="selectWard('${escapeHtml(w)}')">
+          ${escapeHtml(w)}
+        </button>
+      `).join('');
+
+      container.innerHTML = html;
+
+      const input = document.getElementById('task-input');
+      input.placeholder = selectedWard === 'All' 
+        ? "New task (No ward assigned)..." 
+        : `New task for [${selectedWard}]...`;
+    }
+
+    function selectWard(ward) {
+      if (editingTaskId !== null) commitInlineEdit(editingTaskId);
+      selectedWard = ward;
+      saveAndRender();
+    }
+
+    // --- Task Creation ---
+    function addTask(priority) {
+      if (editingTaskId !== null) commitInlineEdit(editingTaskId);
+      const input = document.getElementById('task-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const now = Date.now();
+      const assignedWard = selectedWard === 'All' ? null : selectedWard;
+
+      tasks.push({
+        id: now,
+        text: text,
+        priority: priority,
+        ward: assignedWard,
+        createdAt: now,
+        completed: false
+      });
+
+      input.value = '';
+      saveAndRender();
+    }
+
+    // --- Inline Task Editing ---
+    function startEditing(id, event) {
+      if (event) {
+        event.stopPropagation();
+        event.preventDefault(); // Added for Safari touch handling
+      }
+      if (editingTaskId !== null && editingTaskId !== id) {
+        commitInlineEdit(editingTaskId);
+      }
+      editingTaskId = id;
+      renderWithAnimation();
+      setTimeout(() => {
+        const input = document.getElementById(`edit-input-${id}`);
+        if (input) {
+          input.focus();
+          input.setSelectionRange(input.value.length, input.value.length);
+        }
+      }, 50);
+    }
+
+    function changeUrgencyDirect(id, priority) {
+      const task = tasks.find(t => t.id === id);
+      if (task) {
+        task.priority = priority;
+      }
+      const buttons = document.querySelectorAll('.urgency-opt-btn');
+      buttons.forEach(btn => {
+        btn.classList.remove('selected');
+        if (btn.classList.contains(`opt-${priority}`)) {
+          btn.classList.add('selected');
+        }
+      });
+    }
+
+    function commitInlineEdit(id) {
+      const input = document.getElementById(`edit-input-${id}`);
+      if (input) {
+        const text = input.value.trim();
+        if (text) {
+          const task = tasks.find(t => t.id === id);
+          if (task) task.text = text;
+        }
+      }
+      editingTaskId = null;
+      saveAndRender();
+    }
+
+    function deleteTask(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      if (editingTaskId === id) editingTaskId = null;
+      saveAndRender();
+    }
+
+    // --- Quick Ward Selector Modal ---
+    function openTaskWardModal(taskId) {
+      if (editingTaskId !== null) commitInlineEdit(editingTaskId);
+      activeEditingTaskIdForWard = taskId;
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      const listContainer = document.getElementById('task-ward-select-list');
+      
+      let html = `
+        <div class="ward-select-item clear-item" onclick="assignWardToTask(null)">
+          🚫 None (Clear Ward)
+        </div>
+      `;
+
+      if (wards.length === 0) {
+        html += `<div style="text-align:center; color:#8c8c8c; font-size:0.85rem; padding:12px;">No wards available. Create wards in Settings ⚙️ first!</div>`;
+      } else {
+        html += wards.map(w => {
+          const isSelected = task.ward === w;
+          return `
+            <div class="ward-select-item ${isSelected ? 'selected' : ''}" onclick="assignWardToTask('${escapeHtml(w)}')">
+              <span>${escapeHtml(w)}</span>
+              ${isSelected ? '<span>✓</span>' : ''}
+            </div>
+          `;
+        }).join('');
+      }
+
+      listContainer.innerHTML = html;
+      document.getElementById('task-ward-modal').style.display = 'flex';
+    }
+
+    function closeTaskWardModal() {
+      activeEditingTaskIdForWard = null;
+      document.getElementById('task-ward-modal').style.display = 'none';
+    }
+
+    function assignWardToTask(wardName) {
+      if (activeEditingTaskIdForWard) {
+        const task = tasks.find(t => t.id === activeEditingTaskIdForWard);
+        if (task) {
+          task.ward = wardName;
+          saveAndRender();
+        }
+      }
+      closeTaskWardModal();
+    }
+
+    // --- Ward Modal Management ---
+    function openWardModal() {
+      if (editingTaskId !== null) commitInlineEdit(editingTaskId);
+      renderWardModalList();
+      document.getElementById('ward-modal').style.display = 'flex';
+    }
+
+    function closeWardModal() {
+      document.getElementById('ward-modal').style.display = 'none';
+    }
+
+    function renderWardModalList() {
+      const listContainer = document.getElementById('ward-manage-list');
+      if (wards.length === 0) {
+        listContainer.innerHTML = '<div style="text-align:center; color:#8c8c8c; font-size:0.85rem; padding:12px;">No wards created yet.</div>';
+        return;
+      }
+
+      listContainer.innerHTML = wards.map((w, index) => `
+        <div class="ward-manage-item">
+          <span>${escapeHtml(w)}</span>
+          <div class="item-controls">
+            <button class="icon-btn" onclick="moveWard(${index}, -1)" ${index === 0 ? 'disabled' : ''}>▲</button>
+            <button class="icon-btn" onclick="moveWard(${index}, 1)" ${index === wards.length - 1 ? 'disabled' : ''}>▼</button>
+            <button class="icon-btn" onclick="renameWard(${index})">✏️</button>
+            <button class="icon-btn" style="color:#ff4d4f" onclick="deleteWard(${index})">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function addWardFromModal() {
+      const input = document.getElementById('new-ward-input');
+      const val = input.value.trim();
+      if (!val) return;
+      if (val.toLowerCase() === 'all') {
+        alert("Cannot use 'All' as a ward name.");
+        return;
+      }
+      if (!wards.includes(val)) {
+        wards.push(val);
+        input.value = '';
+        saveAndRender();
+        renderWardModalList();
+      }
+    }
+
+    function moveWard(index, direction) {
+      const targetIndex = index + direction;
+      if (targetIndex < 0 || targetIndex >= wards.length) return;
+      const temp = wards[index];
+      wards[index] = wards[targetIndex];
+      wards[targetIndex] = temp;
+      saveAndRender();
+      renderWardModalList();
+    }
+
+    function renameWard(index) {
+      const current = wards[index];
+      const updated = prompt("Rename ward:", current);
+      if (updated && updated.trim() && updated.trim() !== current) {
+        const newName = updated.trim();
+        tasks.forEach(t => { if (t.ward === current) t.ward = newName; });
+        if (selectedWard === current) selectedWard = newName;
+        wards[index] = newName;
+        saveAndRender();
+        renderWardModalList();
+      }
+    }
+
+    function deleteWard(index) {
+      const target = wards[index];
+      if (confirm(`Delete ward "${target}"? Tasks assigned to this ward will remain, but will lose their ward tag.`)) {
+        wards.splice(index, 1);
+        if (selectedWard === target) selectedWard = 'All';
+        saveAndRender();
+        renderWardModalList();
+      }
+    }
+
+    // --- Task List & Sorting ---
+    function setSort(mode) {
+      if (editingTaskId !== null) commitInlineEdit(editingTaskId);
+      currentSort = mode;
+      document.getElementById('sort-time').classList.toggle('active', mode === 'time');
+      document.getElementById('sort-urgency').classList.toggle('active', mode === 'urgency');
+      renderWithAnimation();
+    }
+
+    function formatDate(timestamp) {
+      const d = new Date(timestamp);
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const seconds = String(d.getSeconds()).padStart(2, '0');
+      
+      return `${day}/${month} ${hours}:${minutes}:${seconds}`;
+    }
+
+    function toggleTask(id) {
+      if (editingTaskId !== null) commitInlineEdit(editingTaskId);
+      tasks = tasks.map(task => task.id === id ? { ...task, completed: !task.completed } : task);
+      saveAndRender();
+    }
+
+    function clearAll() {
+      if (confirm('Clear all tasks?')) {
+        tasks = [];
+        editingTaskId = null;
+        saveAndRender();
+      }
+    }
+
+    function exportTasks() {
+      if (editingTaskId !== null) commitInlineEdit(editingTaskId);
+      if (tasks.length === 0 && wards.length === 0) {
+        alert("No tasks or wards available to backup.");
+        return;
+      }
+
+      const now = Date.now();
+      localStorage.setItem('qt_last_backup', now.toString());
+      lastBackupTime = now;
+
+      const d = new Date();
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const mins = String(d.getMinutes()).padStart(2, '0');
+      const secs = String(d.getSeconds()).padStart(2, '0');
+      const filename = `quick_tasks_backup_${year}-${month}-${day}_${hours}-${mins}-${secs}.json`;
+
+      const backupData = { tasks: tasks, wards: wards };
+
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", filename);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+
+      checkBackupReminder();
+    }
+
+    function importTasks(event) {
+      const fileReader = new FileReader();
+      fileReader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (Array.isArray(imported)) {
+            tasks = imported;
+          } else if (imported.tasks || imported.wards) {
+            tasks = imported.tasks || [];
+            if (imported.wards) wards = imported.wards;
+          } else {
+            alert("Invalid backup file format.");
+            return;
+          }
+          selectedWard = 'All';
+          editingTaskId = null;
+          saveAndRender();
+          alert("Tasks and Ward settings restored successfully!");
+        } catch (err) {
+          alert("Error reading file. Please upload a valid task backup JSON.");
+        }
+      };
+      if (event.target.files[0]) {
+        fileReader.readAsText(event.target.files[0]);
+      }
+    }
+
+    function getSortedTasks() {
+      let filtered = selectedWard === 'All' 
+        ? tasks 
+        : tasks.filter(t => t.ward === selectedWard);
+
+      const sortTasks = (list) => {
+        return [...list].sort((a, b) => {
+          if (currentSort === 'urgency') {
+            return urgencyMap[a.priority] - urgencyMap[b.priority] || b.createdAt - a.createdAt;
+          }
+          return b.createdAt - a.createdAt;
+        });
+      };
+
+      return [...sortTasks(filtered.filter(t => !t.completed)), ...sortTasks(filtered.filter(t => t.completed))];
+    }
+
+    function renderWithAnimation() {
+      const listContainer = document.getElementById('task-list');
+      const emptyState = document.getElementById('empty-state');
+
+      const sortedTasks = getSortedTasks();
+
+      if (sortedTasks.length === 0) {
+        emptyState.style.display = 'block';
+        listContainer.innerHTML = '';
+        return;
+      }
+      emptyState.style.display = 'none';
+
+      const oldNodes = Array.from(listContainer.children);
+      const oldPositions = new Map();
+      oldNodes.forEach(node => {
+        const id = node.getAttribute('data-id');
+        if (id) oldPositions.set(id, node.getBoundingClientRect().top);
+      });
+
+      listContainer.innerHTML = sortedTasks.map(task => {
+        const isEditing = editingTaskId === task.id;
+
+        if (isEditing) {
+          return `
+            <div class="task-item" data-id="${task.id}">
+              <div class="inline-edit-container">
+                <input type="text" id="edit-input-${task.id}" class="inline-edit-input" value="${escapeHtml(task.text)}" onkeydown="if(event.key==='Enter') commitInlineEdit(${task.id})">
+                <div class="inline-urgency-selector">
+                  <span class="urgency-label">Urgency:</span>
+                  <button class="urgency-opt-btn opt-high ${task.priority === 'high' ? 'selected' : ''}" onclick="changeUrgencyDirect(${task.id}, 'high')">High</button>
+                  <button class="urgency-opt-btn opt-mid ${task.priority === 'mid' ? 'selected' : ''}" onclick="changeUrgencyDirect(${task.id}, 'mid')">Mid</button>
+                  <button class="urgency-opt-btn opt-low ${task.priority === 'low' ? 'selected' : ''}" onclick="changeUrgencyDirect(${task.id}, 'low')">Low</button>
+                </div>
+              </div>
+              <div class="task-actions-right">
+                <button class="delete-cross-btn" onclick="deleteTask(${task.id})" title="Delete Task">❌</button>
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="task-item ${task.completed ? 'completed' : ''}" data-id="${task.id}">
+            <button class="action-btn" onclick="toggleTask(${task.id})" title="Toggle Complete">✓</button>
+            <div class="task-left">
+              <div class="task-details">
+                <div class="badges">
+                  <span class="badge badge-${task.priority}">${task.priority}</span>
+                  ${task.ward 
+                    ? `<span class="badge badge-ward" onclick="openTaskWardModal(${task.id})" title="Click to change ward">${escapeHtml(task.ward)} ✏️</span>` 
+                    : `<span class="badge badge-no-ward" onclick="openTaskWardModal(${task.id})" title="Click to assign ward">+ Ward</span>`
+                  }
+                </div>
+                <span class="task-text">${escapeHtml(task.text)}</span>
+                <span class="task-time">${formatDate(task.createdAt)}</span>
+              </div>
+            </div>
+            <div class="task-actions-right">
+              <button class="edit-trigger-btn" onclick="startEditing(${task.id}, event)" title="Edit Task">✏️</button>
+              <button class="delete-cross-btn" onclick="deleteTask(${task.id})" title="Delete Task">❌</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const newNodes = Array.from(listContainer.children);
+      newNodes.forEach(node => {
+        const id = node.getAttribute('data-id');
+        const oldTop = oldPositions.get(id);
+
+        if (oldTop !== undefined) {
+          const newTop = node.getBoundingClientRect().top;
+          const deltaY = oldTop - newTop;
+
+          if (deltaY !== 0) {
+            node.style.transition = 'none';
+            node.style.transform = `translateY(${deltaY}px)`;
+            node.offsetHeight;
+            node.style.transition = 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)';
+            node.style.transform = 'translateY(0)';
+          }
+        }
+      });
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // Initial load
+    saveAndRender();
+  </script>
+</body>
+</html>
