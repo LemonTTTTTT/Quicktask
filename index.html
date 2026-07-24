@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <!-- Safari Viewport Fix: Disables pinch zoom and user scaling -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- Prevents Safari Auto Zoom on text focus -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Quick Tasks - Hospital Ward Edition</title>
   <style>
     :root {
@@ -22,31 +22,41 @@
       margin: 0; 
       padding: 0; 
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-      touch-action: manipulation; /* Prevents double-tap and pinch zoom gestures */
+      touch-action: manipulation;
     }
     
-    /* Safari Fix: Ensures click events bubble properly to document level */
     html, body { 
       background-color: var(--bg); 
       color: var(--text); 
-      display: flex; 
-      flex-direction: column; 
-      height: 100vh;
-      cursor: pointer; /* Critical for Safari click delegation */
+      height: 100%;
+      width: 100%;
+      overflow: hidden; /* Prevents whole page from scrolling offscreen on iOS keyboard popup */
       -webkit-tap-highlight-color: transparent;
-      overflow: hidden; /* Prevents page-level scrolling so fixed/sticky header stays top */
-    }
-    
-    /* Sticky Top Container: Keeps Header & Ward List always visible on top when typing */
-    .top-sticky-container {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: var(--card-bg);
-      flex-shrink: 0;
     }
 
-    header { background: var(--card-bg); padding: 10px 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh; /* Dynamic viewport height for iOS */
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    
+    /* Fixed Top Container: Always locks Header & Ward List at top of screen */
+    .top-fixed-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: var(--card-bg);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    header { background: var(--card-bg); padding: 8px 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
     h1 { font-size: 1.1rem; font-weight: 600; }
     
     .backup-alert {
@@ -61,7 +71,7 @@
       justify-content: space-between;
     }
 
-    .controls { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--card-bg); border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 6px; }
+    .controls { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; background: var(--card-bg); border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 6px; }
     .toggle-group { display: flex; background: #f0f2f5; border-radius: 6px; padding: 2px; }
     .toggle-btn { border: none; background: none; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; cursor: pointer; color: #666; font-weight: 500; }
     .toggle-btn.active { background: white; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -73,21 +83,23 @@
     /* Hospital Ward Navigation Bar */
     .ward-section {
       background: var(--card-bg);
-      padding: 6px 12px;
+      padding: 8px 12px;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       gap: 6px;
       overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
-    .ward-label { font-size: 0.75rem; font-weight: 600; color: #666; white-space: nowrap; }
-    .ward-chips { display: flex; gap: 4px; align-items: center; }
+    .ward-label { font-size: 0.75rem; font-weight: 700; color: #333; white-space: nowrap; }
+    .ward-chips { display: flex; gap: 6px; align-items: center; }
     .ward-chip {
       background: #f0f2f5;
       border: 1px solid var(--border);
-      padding: 3px 8px;
+      padding: 4px 10px;
       border-radius: 12px;
-      font-size: 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
       cursor: pointer;
       white-space: nowrap;
       transition: 0.2s;
@@ -101,7 +113,7 @@
       background: none;
       border: 1px solid var(--border);
       color: #555;
-      padding: 2px 8px;
+      padding: 4px 8px;
       border-radius: 12px;
       font-size: 0.75rem;
       cursor: pointer;
@@ -110,8 +122,17 @@
       margin-left: auto;
     }
 
-    main { flex: 1; overflow-y: auto; padding: 8px; -webkit-overflow-scrolling: touch; }
-    .empty-state { text-align: center; color: #8c8c8c; margin-top: 30vh; }
+    main { 
+      flex: 1; 
+      overflow-y: auto; 
+      padding: 8px; 
+      -webkit-overflow-scrolling: touch; 
+      /* Dynamic padding dynamically calculated via JavaScript on load */
+      padding-top: 130px; 
+      padding-bottom: 110px;
+    }
+
+    .empty-state { text-align: center; color: #8c8c8c; margin-top: 20vh; }
     .empty-icon { font-size: 1.8rem; margin-bottom: 4px; }
 
     .task-list { 
@@ -137,11 +158,9 @@
       background: #fdfdfd;
     }
 
-    /* Safari Text Wrapping Fix */
     .task-item .task-text {
       font-size: 0.85rem; 
       font-weight: 500; 
-      transition: color 0.3s, text-decoration-color 0.3s;
       word-break: break-word;
       overflow-wrap: anywhere;
       white-space: normal;
@@ -168,18 +187,15 @@
       align-items: center;
       gap: 2px;
     }
-    .badge-ward:hover { opacity: 0.85; }
     
     .badge-no-ward {
       background-color: #e9ecef;
       color: #666;
       cursor: pointer;
     }
-    .badge-no-ward:hover { background-color: #dee2e6; }
 
     .task-time { font-size: 0.68rem; color: #8c8c8c; display: flex; align-items: center; gap: 4px; }
 
-    /* Completion Tick Button */
     .action-btn { 
       background: none; 
       border: 1px solid var(--border); 
@@ -192,10 +208,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s; 
       flex-shrink: 0;
     }
-    .action-btn:hover { border-color: #52c41a; color: #52c41a; }
     .task-item.completed .action-btn { 
       background-color: #52c41a; 
       border-color: #52c41a; 
@@ -217,12 +231,8 @@
       cursor: pointer;
       padding: 2px 4px;
       border-radius: 4px;
-      transition: background 0.2s, color 0.2s;
     }
-    .edit-trigger-btn:hover { background: #f0f0f0; color: var(--primary); }
-    .delete-cross-btn:hover { background: #fff1f0; color: #ff4d4f; }
 
-    /* Inline Edit Box Styles */
     .inline-edit-container {
       display: flex;
       flex-direction: column;
@@ -234,16 +244,12 @@
       padding: 6px 8px;
       border: 1px solid var(--primary);
       border-radius: 4px;
-      font-size: 16px; /* Safari Fix: Must be 16px to prevent auto zoom */
+      font-size: 16px; /* Prevents iOS auto pinch/zoom */
       outline: none;
       -webkit-appearance: none;
     }
-    .inline-urgency-selector {
-      display: flex;
-      gap: 4px;
-      align-items: center;
-    }
-    .urgency-label { font-size: 0.7rem; font-weight: 600; color: #666; margin-right: 2px; }
+    .inline-urgency-selector { display: flex; gap: 4px; align-items: center; }
+    .urgency-label { font-size: 0.7rem; font-weight: 600; color: #666; }
     .urgency-opt-btn {
       flex: 1;
       padding: 4px 6px;
@@ -255,41 +261,42 @@
       color: #666;
       cursor: pointer;
       text-transform: uppercase;
-      transition: 0.2s;
     }
-    .urgency-opt-btn.opt-high.selected { background: var(--high); color: white; border-color: var(--high); }
-    .urgency-opt-btn.opt-mid.selected { background: var(--mid); color: white; border-color: var(--mid); }
-    .urgency-opt-btn.opt-low.selected { background: var(--low); color: white; border-color: var(--low); }
+    .urgency-opt-btn.opt-high.selected { background: var(--high); color: white; }
+    .urgency-opt-btn.opt-mid.selected { background: var(--mid); color: white; }
+    .urgency-opt-btn.opt-low.selected { background: var(--low); color: white; }
 
     footer { 
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
       background: var(--card-bg); 
       padding: 8px 12px; 
       border-top: 1px solid var(--border); 
       display: flex; 
       flex-direction: column; 
       gap: 6px;
-      flex-shrink: 0;
+      z-index: 1000;
     }
     
-    /* Safari Fix: Font size set to 16px prevents iPhone from zooming in on input focus */
     .input-box { 
       width: 100%; 
-      padding: 8px 10px; 
+      padding: 10px 12px; 
       border: 1px solid var(--border); 
       border-radius: 6px; 
-      font-size: 16px; /* Critical fix for iOS Safari auto-zoom */
+      font-size: 16px; /* Prevents auto zoom */
       outline: none; 
       -webkit-appearance: none; 
     }
     .input-box:focus { border-color: var(--primary); }
     .btn-group { display: flex; gap: 6px; }
-    .add-btn { flex: 1; padding: 6px; border: 1px solid var(--border); background: #fafafa; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    .add-btn { flex: 1; padding: 8px; border: 1px solid var(--border); background: #fafafa; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
     .add-btn.high { color: var(--high); }
     .add-btn.mid { color: var(--mid); }
     .add-btn.low { color: var(--low); }
-    .add-btn:hover { background: #f0f0f0; }
 
-    /* Modal Styles */
+    /* Modals */
     .modal-backdrop {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -297,7 +304,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      z-index: 1000;
+      z-index: 2000;
     }
     .modal-content {
       background: white;
@@ -311,7 +318,6 @@
       gap: 12px;
     }
     .modal-header { display: flex; justify-content: space-between; align-items: center; }
-    .modal-header h3 { font-size: 1rem; }
     .close-modal-btn { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: #8c8c8c; }
     
     .ward-select-list { display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow-y: auto; }
@@ -326,76 +332,74 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      transition: 0.2s;
     }
-    .ward-select-item:hover { background: #f0f7ff; border-color: var(--primary); }
     .ward-select-item.selected { background: #e6f7ff; border-color: var(--primary); color: var(--primary); font-weight: 600; }
     .ward-select-item.clear-item { background: #fff1f0; border-color: #ffa39e; color: #ff4d4f; }
-    .ward-select-item.clear-item:hover { background: #ff4d4f; color: white; }
 
     .ward-manage-list { display: flex; flex-direction: column; gap: 6px; max-height: 250px; overflow-y: auto; }
     .ward-manage-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; }
-    .ward-manage-item span { font-weight: 500; font-size: 0.85rem; }
     .item-controls { display: flex; gap: 4px; }
-    .icon-btn { background: none; border: none; cursor: pointer; font-size: 0.8rem; padding: 2px 4px; border-radius: 4px; }
-    .icon-btn:hover { background: #f0f0f0; }
+    .icon-btn { background: none; border: none; cursor: pointer; font-size: 0.8rem; padding: 2px 4px; }
     .modal-footer { display: flex; gap: 6px; }
     .modal-input { flex: 1; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 16px; -webkit-appearance: none; }
   </style>
 </head>
 <body>
 
-  <!-- Sticky Top Wrapper: Ensures Header, Controls, and Ward bar stay pinned at top when keyboard opens -->
-  <div class="top-sticky-container">
-    <header>
-      <h1>⚡ Quick Tasks</h1>
-    </header>
+  <div class="app-container" id="app-container">
+    <!-- Always Fixed at Top -->
+    <div class="top-fixed-container" id="top-fixed">
+      <header>
+        <h1>⚡ Quick Tasks</h1>
+      </header>
 
-    <!-- Backup Warning Banner -->
-    <div id="backup-alert" class="backup-alert" style="display: none;">
-      <span>⚠️ Backup Reminder: You haven't backed up your tasks in over 24 hours!</span>
-      <button class="action-link" onclick="exportTasks()">Backup Now</button>
-    </div>
-
-    <div class="controls">
-      <div class="toggle-group">
-        <button class="toggle-btn active" id="sort-time" onclick="setSort('time')">By time</button>
-        <button class="toggle-btn" id="sort-urgency" onclick="setSort('urgency')">By urgency</button>
+      <div id="backup-alert" class="backup-alert" style="display: none;">
+        <span>⚠️ Backup Reminder (>24h)!</span>
+        <button class="action-link" onclick="exportTasks()">Backup Now</button>
       </div>
-      <div class="backup-actions">
-        <button class="action-link" onclick="exportTasks()">📥 Backup</button>
-        <button class="action-link" onclick="document.getElementById('import-file').click()">📤 Restore</button>
-        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importTasks(event)">
-        <button class="clear-btn" onclick="clearAll()">Clear all</button>
+
+      <div class="controls">
+        <div class="toggle-group">
+          <button class="toggle-btn active" id="sort-time" onclick="setSort('time')">By time</button>
+          <button class="toggle-btn" id="sort-urgency" onclick="setSort('urgency')">By urgency</button>
+        </div>
+        <div class="backup-actions">
+          <button class="action-link" onclick="exportTasks()">📥 Backup</button>
+          <button class="action-link" onclick="document.getElementById('import-file').click()">📤 Restore</button>
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importTasks(event)">
+          <button class="clear-btn" onclick="clearAll()">Clear all</button>
+        </div>
+      </div>
+
+      <!-- Ward Selection Navigation Bar -->
+      <div class="ward-section">
+        <span class="ward-label">Ward:</span>
+        <div class="ward-chips" id="ward-chips"></div>
+        <button class="settings-btn" onclick="openWardModal()">⚙️ Settings</button>
       </div>
     </div>
 
-    <!-- Hospital Ward Navigation Bar -->
-    <div class="ward-section">
-      <span class="ward-label">Ward:</span>
-      <div class="ward-chips" id="ward-chips"></div>
-      <button class="settings-btn" onclick="openWardModal()">⚙️ Settings</button>
-    </div>
+    <!-- Scrollable Task Container -->
+    <main id="main-content">
+      <div id="empty-state" class="empty-state">
+        <div class="empty-icon">✓</div>
+        <p>No tasks</p>
+      </div>
+      <div id="task-list" class="task-list"></div>
+    </main>
+
+    <!-- Fixed Footer Input -->
+    <footer id="app-footer">
+      <input type="text" id="task-input" class="input-box" placeholder="New task..." onkeydown="if(event.key==='Enter') addTask('mid')">
+      <div class="btn-group">
+        <button class="add-btn high" onclick="addTask('high')">+ High</button>
+        <button class="add-btn mid" onclick="addTask('mid')">+ Mid</button>
+        <button class="add-btn low" onclick="addTask('low')">+ Low</button>
+      </div>
+    </footer>
   </div>
 
-  <main>
-    <div id="empty-state" class="empty-state">
-      <div class="empty-icon">✓</div>
-      <p>No tasks</p>
-    </div>
-    <div id="task-list" class="task-list"></div>
-  </main>
-
-  <footer>
-    <input type="text" id="task-input" class="input-box" placeholder="New task..." onkeydown="if(event.key==='Enter') addTask('mid')">
-    <div class="btn-group">
-      <button class="add-btn high" onclick="addTask('high')">+ High</button>
-      <button class="add-btn mid" onclick="addTask('mid')">+ Mid</button>
-      <button class="add-btn low" onclick="addTask('low')">+ Low</button>
-    </div>
-  </footer>
-
-  <!-- Ward Selector Modal -->
+  <!-- Ward Selection Modal -->
   <div id="task-ward-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content">
       <div class="modal-header">
@@ -406,7 +410,7 @@
     </div>
   </div>
 
-  <!-- Ward Settings Modal -->
+  <!-- Ward Management Modal -->
   <div id="ward-modal" class="modal-backdrop" style="display: none;">
     <div class="modal-content">
       <div class="modal-header">
@@ -432,7 +436,41 @@
 
     const urgencyMap = { high: 1, mid: 2, low: 3 };
 
-    // Explicit Document Listener for Safari Compatibility
+    // iOS Safari Visual Viewport Handler: Adjusts view area live when soft keyboard opens
+    function handleViewportResize() {
+      if (!window.visualViewport) return;
+      
+      const appContainer = document.getElementById('app-container');
+      const footer = document.getElementById('app-footer');
+      const topFixed = document.getElementById('top-fixed');
+      const mainContent = document.getElementById('main-content');
+
+      const viewportHeight = window.visualViewport.height;
+      const viewportTop = window.visualViewport.offsetTop;
+
+      // Ensure container fits inside visual viewport when keyboard is active
+      appContainer.style.height = `${viewportHeight}px`;
+      appContainer.style.top = `${viewportTop}px`;
+
+      // Recalculate margins dynamically
+      const topHeight = topFixed.offsetHeight;
+      const footerHeight = footer.offsetHeight;
+      mainContent.style.paddingTop = `${topHeight + 8}px`;
+      mainContent.style.paddingBottom = `${footerHeight + 8}px`;
+
+      // Always reset body scroll position to prevent iOS top shift
+      window.scrollTo(0, 0);
+    }
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleViewportResize);
+      window.visualViewport.addEventListener('scroll', handleViewportResize);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(handleViewportResize, 100);
+    });
+
     document.addEventListener('click', function(e) {
       if (editingTaskId === null) return;
       const editContainer = document.querySelector(`[data-id="${editingTaskId}"]`);
@@ -447,6 +485,7 @@
       checkBackupReminder();
       renderWards();
       renderWithAnimation();
+      setTimeout(handleViewportResize, 50);
     }
 
     function checkBackupReminder() {
@@ -461,10 +500,8 @@
       }
     }
 
-    // --- Ward Chip Render ---
     function renderWards() {
       const container = document.getElementById('ward-chips');
-      
       let html = `
         <button class="ward-chip ${selectedWard === 'All' ? 'active' : ''}" onclick="selectWard('All')">
           All
@@ -491,7 +528,6 @@
       saveAndRender();
     }
 
-    // --- Task Creation ---
     function addTask(priority) {
       if (editingTaskId !== null) commitInlineEdit(editingTaskId);
       const input = document.getElementById('task-input');
@@ -514,11 +550,10 @@
       saveAndRender();
     }
 
-    // --- Inline Task Editing ---
     function startEditing(id, event) {
       if (event) {
         event.stopPropagation();
-        event.preventDefault(); // Added for Safari touch handling
+        event.preventDefault();
       }
       if (editingTaskId !== null && editingTaskId !== id) {
         commitInlineEdit(editingTaskId);
@@ -536,9 +571,7 @@
 
     function changeUrgencyDirect(id, priority) {
       const task = tasks.find(t => t.id === id);
-      if (task) {
-        task.priority = priority;
-      }
+      if (task) task.priority = priority;
       const buttons = document.querySelectorAll('.urgency-opt-btn');
       buttons.forEach(btn => {
         btn.classList.remove('selected');
@@ -567,7 +600,6 @@
       saveAndRender();
     }
 
-    // --- Quick Ward Selector Modal ---
     function openTaskWardModal(taskId) {
       if (editingTaskId !== null) commitInlineEdit(editingTaskId);
       activeEditingTaskIdForWard = taskId;
@@ -575,12 +607,7 @@
       if (!task) return;
 
       const listContainer = document.getElementById('task-ward-select-list');
-      
-      let html = `
-        <div class="ward-select-item clear-item" onclick="assignWardToTask(null)">
-          🚫 None (Clear Ward)
-        </div>
-      `;
+      let html = `<div class="ward-select-item clear-item" onclick="assignWardToTask(null)">🚫 None (Clear Ward)</div>`;
 
       if (wards.length === 0) {
         html += `<div style="text-align:center; color:#8c8c8c; font-size:0.85rem; padding:12px;">No wards available. Create wards in Settings ⚙️ first!</div>`;
@@ -616,7 +643,6 @@
       closeTaskWardModal();
     }
 
-    // --- Ward Modal Management ---
     function openWardModal() {
       if (editingTaskId !== null) commitInlineEdit(editingTaskId);
       renderWardModalList();
@@ -688,7 +714,7 @@
 
     function deleteWard(index) {
       const target = wards[index];
-      if (confirm(`Delete ward "${target}"? Tasks assigned to this ward will remain, but will lose their ward tag.`)) {
+      if (confirm(`Delete ward "${target}"?`)) {
         wards.splice(index, 1);
         if (selectedWard === target) selectedWard = 'All';
         saveAndRender();
@@ -696,7 +722,6 @@
       }
     }
 
-    // --- Task List & Sorting ---
     function setSort(mode) {
       if (editingTaskId !== null) commitInlineEdit(editingTaskId);
       currentSort = mode;
@@ -712,7 +737,6 @@
       const hours = String(d.getHours()).padStart(2, '0');
       const minutes = String(d.getMinutes()).padStart(2, '0');
       const seconds = String(d.getSeconds()).padStart(2, '0');
-      
       return `${day}/${month} ${hours}:${minutes}:${seconds}`;
     }
 
@@ -742,17 +766,8 @@
       lastBackupTime = now;
 
       const d = new Date();
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      const hours = String(d.getHours()).padStart(2, '0');
-      const mins = String(d.getMinutes()).padStart(2, '0');
-      const secs = String(d.getSeconds()).padStart(2, '0');
-      const filename = `quick_tasks_backup_${year}-${month}-${day}_${hours}-${mins}-${secs}.json`;
-
-      const backupData = { tasks: tasks, wards: wards };
-
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+      const filename = `quick_tasks_backup_${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.json`;
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ tasks, wards }, null, 2));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute("href", dataStr);
       downloadAnchor.setAttribute("download", filename);
@@ -773,28 +788,20 @@
           } else if (imported.tasks || imported.wards) {
             tasks = imported.tasks || [];
             if (imported.wards) wards = imported.wards;
-          } else {
-            alert("Invalid backup file format.");
-            return;
           }
           selectedWard = 'All';
           editingTaskId = null;
           saveAndRender();
-          alert("Tasks and Ward settings restored successfully!");
+          alert("Backup restored!");
         } catch (err) {
-          alert("Error reading file. Please upload a valid task backup JSON.");
+          alert("Error reading backup file.");
         }
       };
-      if (event.target.files[0]) {
-        fileReader.readAsText(event.target.files[0]);
-      }
+      if (event.target.files[0]) fileReader.readAsText(event.target.files[0]);
     }
 
     function getSortedTasks() {
-      let filtered = selectedWard === 'All' 
-        ? tasks 
-        : tasks.filter(t => t.ward === selectedWard);
-
+      let filtered = selectedWard === 'All' ? tasks : tasks.filter(t => t.ward === selectedWard);
       const sortTasks = (list) => {
         return [...list].sort((a, b) => {
           if (currentSort === 'urgency') {
@@ -803,14 +810,12 @@
           return b.createdAt - a.createdAt;
         });
       };
-
       return [...sortTasks(filtered.filter(t => !t.completed)), ...sortTasks(filtered.filter(t => t.completed))];
     }
 
     function renderWithAnimation() {
       const listContainer = document.getElementById('task-list');
       const emptyState = document.getElementById('empty-state');
-
       const sortedTasks = getSortedTasks();
 
       if (sortedTasks.length === 0) {
@@ -819,13 +824,6 @@
         return;
       }
       emptyState.style.display = 'none';
-
-      const oldNodes = Array.from(listContainer.children);
-      const oldPositions = new Map();
-      oldNodes.forEach(node => {
-        const id = node.getAttribute('data-id');
-        if (id) oldPositions.set(id, node.getBoundingClientRect().top);
-      });
 
       listContainer.innerHTML = sortedTasks.map(task => {
         const isEditing = editingTaskId === task.id;
@@ -843,7 +841,7 @@
                 </div>
               </div>
               <div class="task-actions-right">
-                <button class="delete-cross-btn" onclick="deleteTask(${task.id})" title="Delete Task">❌</button>
+                <button class="delete-cross-btn" onclick="deleteTask(${task.id})" title="Delete">❌</button>
               </div>
             </div>
           `;
@@ -857,8 +855,8 @@
                 <div class="badges">
                   <span class="badge badge-${task.priority}">${task.priority}</span>
                   ${task.ward 
-                    ? `<span class="badge badge-ward" onclick="openTaskWardModal(${task.id})" title="Click to change ward">${escapeHtml(task.ward)} ✏️</span>` 
-                    : `<span class="badge badge-no-ward" onclick="openTaskWardModal(${task.id})" title="Click to assign ward">+ Ward</span>`
+                    ? `<span class="badge badge-ward" onclick="openTaskWardModal(${task.id})">${escapeHtml(task.ward)} ✏️</span>` 
+                    : `<span class="badge badge-no-ward" onclick="openTaskWardModal(${task.id})">+ Ward</span>`
                   }
                 </div>
                 <span class="task-text">${escapeHtml(task.text)}</span>
@@ -866,38 +864,18 @@
               </div>
             </div>
             <div class="task-actions-right">
-              <button class="edit-trigger-btn" onclick="startEditing(${task.id}, event)" title="Edit Task">✏️</button>
-              <button class="delete-cross-btn" onclick="deleteTask(${task.id})" title="Delete Task">❌</button>
+              <button class="edit-trigger-btn" onclick="startEditing(${task.id}, event)">✏️</button>
+              <button class="delete-cross-btn" onclick="deleteTask(${task.id})">❌</button>
             </div>
           </div>
         `;
       }).join('');
-
-      const newNodes = Array.from(listContainer.children);
-      newNodes.forEach(node => {
-        const id = node.getAttribute('data-id');
-        const oldTop = oldPositions.get(id);
-
-        if (oldTop !== undefined) {
-          const newTop = node.getBoundingClientRect().top;
-          const deltaY = oldTop - newTop;
-
-          if (deltaY !== 0) {
-            node.style.transition = 'none';
-            node.style.transform = `translateY(${deltaY}px)`;
-            node.offsetHeight;
-            node.style.transition = 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)';
-            node.style.transform = 'translateY(0)';
-          }
-        }
-      });
     }
 
     function escapeHtml(str) {
       return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
-    // Initial load
     saveAndRender();
   </script>
 </body>
