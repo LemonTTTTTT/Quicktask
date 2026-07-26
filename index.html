@@ -600,7 +600,6 @@
 
     
     function toggleTheme() {
-      if (typeof gtag === 'function') gtag('event', 'theme_toggled');
       const current = document.documentElement.getAttribute('data-theme') || 'light';
       const next = current === 'light' ? 'dark' : 'light';
       document.documentElement.setAttribute('data-theme', next);
@@ -732,8 +731,6 @@
       if (mainContent) mainContent.scrollTop = 0;
 
       selectedWard = ward;
-      const trackedWard = (ward === 'All' || ward === 'Ward') ? ward : 'custom_ward';
-      if (typeof gtag === 'function') gtag('event', 'ward_switched', { 'ward_type': trackedWard });
       saveAndRender();
 
       // Keep focus on input if we are rapidly adding tasks
@@ -984,13 +981,7 @@
 
     function toggleTask(id) {
       if (editingTaskId !== null) commitInlineEdit(editingTaskId);
-      tasks = tasks.map(task => {
-        if (task.id === id) {
-          if (typeof gtag === 'function') gtag('event', 'task_toggled', { 'is_completed': !task.completed });
-          return { ...task, completed: !task.completed };
-        }
-        return task;
-      });
+      tasks = tasks.map(task => task.id === id ? { ...task, completed: !task.completed } : task);
       saveAndRender();
     }
 
@@ -1016,7 +1007,6 @@
     }
 
     function exportTasks() {
-      if (typeof gtag === 'function') gtag('event', 'backup_used');
       if (editingTaskId !== null) commitInlineEdit(editingTaskId);
       if (tasks.length === 0 && wards.length === 0) {
         alert("No tasks or wards available to backup.");
